@@ -11,37 +11,37 @@
       "types": [
         {
           "emoji": "💫",
-          "code": ":dizzy:",
+          "code": ":dizzy: feature",
           "description": "A new feature",
           "name": "feature"
         },
         {
           "emoji": "🛠️",
-          "code": ":hammer_and_wrench:",
+          "code": ":hammer_and_wrench: fix",
           "description": "A bug fix",
           "name": "fix"
         },
         {
           "emoji": "📌",
-          "code": ":pushpin:",
+          "code": ":pushpin: config",
           "description": "Config change",
           "name": "config"
         },
         {
           "emoji": "📙",
-          "code": ":orange_book:",
+          "code": ":orange_book: docs",
           "description": "Documentation only changes",
           "name": "docs"
         },
         {
           "emoji": "🎊",
-          "code": ":confetti_ball:",
+          "code": ":confetti_ball: style",
           "description": "Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)",
           "name": "style"
         },
         {
           "emoji": "🏮",
-          "code": ":lantern:",
+          "code": ":lantern: refactor",
           "description": "A code change that neither fixes a bug nor adds a feature",
           "name": "refactor"
         }
