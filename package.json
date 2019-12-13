@@ -1,0 +1,51 @@
+{
+  "devDependencies": {
+    "commitizen": "^4.0.3",
+    "cz-emoji": "^1.1.2"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-emoji"
+    },
+    "cz-emoji": {
+      "types": [
+        {
+          "emoji": "🌟",
+          "code": ":star2:",
+          "description": "A new feature",
+          "name": "feature"
+        },
+        {
+          "emoji": "🛠️",
+          "code": ":Hammer and Wrench:",
+          "description": "A bug fix",
+          "name": "fix"
+        },
+        {
+          "emoji": "📌",
+          "code": ":Pushpin:",
+          "description": "Config change",
+          "name": "config"
+        },
+        {
+          "emoji": "📙",
+          "code": ":Orange Book:",
+          "description": "Documentation only changes",
+          "name": "docs"
+        },
+        {
+          "emoji": "🎊",
+          "code": ":Confetti Ball:",
+          "description": "Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)",
+          "name": "style"
+        },
+        {
+          "emoji": "🏮",
+          "code": ":Red Paper Lantern:",
+          "description": "A code change that neither fixes a bug nor adds a feature",
+          "name": "refactor"
+        }
+      ]
+    }
+  }
+}
