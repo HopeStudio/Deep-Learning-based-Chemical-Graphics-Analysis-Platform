@@ -1,0 +1,44 @@
+table: user
++----------+---------------------+------+-----+---------+----------------+
+| Field    | Type                | Null | Key | Default | Extra          |
++----------+---------------------+------+-----+---------+----------------+
+| id       | bigint(20) unsigned | NO   | PRI | NULL    | auto_increment |
+| name     | varchar(64)         | NO   | UNI | NULL    |                |
+| password | varchar(100)        | NO   |     | NULL    |                |
+| avatar   | varchar(200)        | NO   |     | NULL    |                |
+| group_id | int(11)             | NO   | MUL | 1       |                |
+| gender   | enum('F','M','P')   | NO   |     | P       |                |
++----------+---------------------+------+-----+---------+----------------+
+
+table: user_profile
++------------------+---------------------+------+-----+---------+----------------+
+| Field            | Type                | Null | Key | Default | Extra          |
++------------------+---------------------+------+-----+---------+----------------+
+| id               | bigint(20) unsigned | NO   | PRI | NULL    | auto_increment |
+| user_id          | bigint(20) unsigned | NO   | UNI | NULL    |                |
+| bio              | varchar(300)        | YES  |     | NULL    |                |
+| location         | varchar(100)        | YES  |     | NULL    |                |
+| url              | varchar(200)        | YES  |     | NULL    |                |
+| create_time      | date                | NO   |     | NULL    |                |
+| last_modify_time | date                | NO   |     | NULL    |                |
++------------------+---------------------+------+-----+---------+----------------+
+
+table: user_oauth
++--------------+---------------------+------+-----+---------+----------------+
+| Field        | Type                | Null | Key | Default | Extra          |
++--------------+---------------------+------+-----+---------+----------------+
+| id           | bigint(20) unsigned | NO   | PRI | NULL    | auto_increment |
+| user_id      | bigint(20) unsigned | NO   | UNI | NULL    |                |
+| auth_type    | varchar(45)         | NO   |     | NULL    |                |
+| access_token | varchar(600)        | YES  |     | NULL    |                |
+| open_id      | varchar(64)         | YES  |     | NULL    |                |
++--------------+---------------------+------+-----+---------+----------------+
+
+table: user_group
++------------+-------------+------+-----+---------+----------------+
+| Field      | Type        | Null | Key | Default | Extra          |
++------------+-------------+------+-----+---------+----------------+
+| id         | int(11)     | NO   | PRI | NULL    | auto_increment |
+| permission | binary(10)  | NO   |     | 0x30    |                |
+| group_name | varchar(64) | NO   | UNI | NULL    |                |
++------------+-------------+------+-----+---------+----------------+
