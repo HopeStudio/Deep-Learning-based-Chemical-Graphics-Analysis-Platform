@@ -6,6 +6,5 @@ declare module 'egg' {
   }
 
   interface Context {
-    aaa: string
   }
 }

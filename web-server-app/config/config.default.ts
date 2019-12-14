@@ -10,9 +10,9 @@ export default (appInfo: EggAppInfo) => {
       client: {
         host: 'localhost',
         port: '3306',
-        user: 'root',
+        user: 'everbrez',
         password: 'everbrez233',
-        database: 'user',
+        database: 'graphics_analysis_platform',
       },
     },
   }
