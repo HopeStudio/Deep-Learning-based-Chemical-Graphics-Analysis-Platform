@@ -41,8 +41,45 @@ export default class UserService extends Service {
   }
 
   async register(registerUser: RegisterUser) {
-    const { uname, password, authToken, authType, authId } = registerUser
-    console.log(uname, password, authId, authToken, authType)
+    const { uname: name, password, authType, authId } = registerUser
+    const result = await this.app.mysql.beginTransactionScope(async coon => {
+      const result = await coon.insert<UserSchemaForRegister>('user', {
+        name,
+        password,
+        avatar: 'default',
+      })
+
+      if (result.affectedRows !== 1) {
+        throw new Error('add user fail')
+      }
+
+      const queryResult = await coon.select<UserSchema[]>('user', {
+        where: { name },
+        columns: ['id', 'name', 'avatar', 'group_id', 'gender'],
+      })
+
+      if (queryResult === null || queryResult.length === 0) {
+        throw new Error('user doesn\'t exist')
+      }
+
+      const [user] = queryResult as UserSchema[]
+
+      const { id: user_id } = user
+
+      const userAuthResult = await coon.insert<OAuthSchemaRegister>('user_oauth', {
+        user_id,
+        auth_type: authType,
+        open_id: authId,
+      })
+
+      if (userAuthResult.affectedRows !== 1) {
+        throw new Error('user_oauth fail')
+      }
+
+      return user
+    }, this.ctx)
+
+    return result
   }
 
   /**
@@ -68,7 +105,7 @@ export default class UserService extends Service {
    * @returns
    * @memberof UserService
    */
-  async create({ name, password }) {
+  async createUser({ name, password }) {
     const result = await this.app.mysql.insert<UserSchemaForRegister>('user', {
       name,
       password,
@@ -107,28 +144,26 @@ interface GetUserQuery {
   id?: number
 }
 
-enum AuthTypes {
-  email = 'email',
-  phone = 'phone',
-}
-
-interface RegisterUser {
-  uname: string
-  password: string
-  authType: AuthTypes.email | AuthTypes.phone
-  authToken: string
-  authId: string
-}
-
 interface OAuthQuery {
   auth_type: string
   open_id: string
 }
 
-interface OAuthSchema {
-  id: number
+interface OAuthSchemaRegister {
   user_id: number
   auth_type: string
-  access_token: string
   open_id: string
+  access_token?: string
+}
+
+interface OAuthSchema extends OAuthSchemaRegister {
+  id: number
+  access_token: string
+}
+
+interface RegisterUser {
+  uname: string
+  password: string
+  authType: string
+  authId: string
 }

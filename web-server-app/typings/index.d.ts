@@ -16,7 +16,7 @@ interface mysqlSelectConfig {
   columns?: string[]
   orders?: Array<any>
   limit?: string
-  offset: string
+  offset?: string
 }
 
 interface mysqlFuns {
@@ -24,6 +24,7 @@ interface mysqlFuns {
   get<T>(table: string, query: object): Promise<T | null>
   select<T>(table: string, config: mysqlSelectConfig): Promise<T | null>
   beginTransaction(): mysqlTransaction
+  beginTransactionScope(func:((coon: mysqlTransaction)=>Promise<any>, ctx)
 }
 
 interface mysqlTransaction extends mysqlFuns{

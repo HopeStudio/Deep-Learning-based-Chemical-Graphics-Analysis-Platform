@@ -39,7 +39,11 @@ export default class VerificationController extends Controller {
 
     if (result) {
       // verify successfully
-      this.ctx.send()
+      const token = await this.ctx.service.jwt.sign({
+        authType,
+        authId,
+      })
+      this.ctx.send(0, { authToken: token })
       return
     }
 

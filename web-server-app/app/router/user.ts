@@ -3,10 +3,6 @@ import { Application } from 'egg'
 export default (app: Application) => {
   const { router, controller, middleware } = app
 
-  router.get(
-    '/user',
-    controller.user.add)
-
   router.post(
     '/user/check/username',
     middleware.errorHandler(),
@@ -18,4 +14,10 @@ export default (app: Application) => {
     middleware.errorHandler(),
     middleware.checkParam('email'),
     controller.user.checkEmail)
+
+  router.post(
+    '/user/register',
+    middleware.errorHandler(),
+    middleware.checkParam('uname', 'password', 'authType', 'authToken', 'authId'),
+    controller.user.register)
 }
