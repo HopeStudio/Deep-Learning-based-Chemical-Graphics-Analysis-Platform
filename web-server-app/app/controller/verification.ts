@@ -6,7 +6,7 @@ enum AuthTypes {
 }
 
 export default class VerificationController extends Controller {
-  async mailValidator() {
+  private async mailValidator() {
     const { authType, authId } = this.ctx.request.body as VerificationData
     if (authType === AuthTypes.email) {
       await this.ctx.service.verification.sendVerificationCodeToMail(authId, authType)
@@ -14,6 +14,22 @@ export default class VerificationController extends Controller {
         code: 0,
       }
     }
+  }
+
+  private async phoneValidator() {
+    const { authType, authId } = this.ctx.request.body as VerificationData
+    if (authType === AuthTypes.phone) {
+      await this.ctx.service.verification.sendVerificationCodeToPhone(authId, authType)
+      this.ctx.body = {
+        code: 0,
+      }
+    }
+  }
+
+  async mainValidator() {
+    this.ctx.body = this.ctx.helper.response(1, 'unsupport auth type')
+    await this.mailValidator()
+    await this.phoneValidator()
   }
 
   async verifyCode() {

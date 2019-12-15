@@ -38,4 +38,6 @@ declare module 'egg' {
 
   interface Context {
   }
+
+  interface 
 }

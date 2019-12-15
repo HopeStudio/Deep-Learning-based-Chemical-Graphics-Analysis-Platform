@@ -58,4 +58,10 @@ export default class VerificationService extends Service {
 
     return info
   }
+
+  async sendVerificationCodeToPhone(receiverMail: string, identifierPrefix?: string) {
+    const { expire = 5 } = this.app.config.verificationCode || {}
+    const verificationCode = await this.generateVerificationCode(identifierPrefix + receiverMail, expire)
+    await this.ctx.service.sms.send(verificationCode, expire)
+  }
 }
