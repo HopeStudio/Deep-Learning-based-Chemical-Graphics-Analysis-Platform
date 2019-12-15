@@ -9,11 +9,26 @@ export default (appInfo: EggAppInfo) => {
     mysql: {
       client: {
         host: 'localhost',
-        port: '3306',
+        port: 3306,
         user: 'everbrez',
         password: 'everbrez233',
         database: 'graphics_analysis_platform',
       },
+    },
+
+    // redis server config
+    redis: {
+      client: {
+        host: 'localhost',
+        port: 6379,
+        password: '',
+        db: 0,
+      },
+    },
+
+    verificationCode: {
+      // min
+      expire: 5,
     },
   }
 

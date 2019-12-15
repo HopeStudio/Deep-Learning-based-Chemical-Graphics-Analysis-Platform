@@ -1,6 +1,9 @@
 import { Service } from 'egg'
 
 export default class UserService extends Service {
+  async register(registerUser: RegisterUser) {
+    this.ctx.body = 'HW' + registerUser.authToken || 0
+  }
   /**
    * get one user information
    *
@@ -57,4 +60,16 @@ interface UserSchema extends UserSchemaForRegister {
 interface GetUserQuery {
   name?: string
   id?: number
+}
+
+enum AuthTypes {
+  email = 'email',
+  phone = 'phone',
+}
+
+interface RegisterUser {
+  name: string,
+  password: string,
+  authType: AuthTypes.email | AuthTypes.phone,
+  authToken: string
 }
