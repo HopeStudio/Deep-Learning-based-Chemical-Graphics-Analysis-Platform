@@ -30,6 +30,10 @@ export default (appInfo: EggAppInfo) => {
       // min
       expire: 5,
     },
+
+    jwt: {
+      privateKey: 'Deep Learning-based Chemical Graphics Analysis Platform BackEnd main server',
+    },
   }
 
   // the return config will combines to EggAppConfig
