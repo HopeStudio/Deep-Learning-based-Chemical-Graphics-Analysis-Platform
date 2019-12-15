@@ -27,7 +27,7 @@ export default class VerificationController extends Controller {
   }
 
   async mainValidator() {
-    this.ctx.body = this.ctx.helper.response(1, 'unsupport auth type')
+    this.ctx.send(1, 'unsupport auth type')
     await this.mailValidator()
     await this.phoneValidator()
   }
@@ -39,11 +39,11 @@ export default class VerificationController extends Controller {
 
     if (result) {
       // verify successfully
-      this.ctx.body = this.ctx.helper.response()
+      this.ctx.send()
       return
     }
 
-    this.ctx.body = this.ctx.helper.response(1, 'fail to verify code')
+    this.ctx.send(1, 'fail to verify code')
   }
 }
 

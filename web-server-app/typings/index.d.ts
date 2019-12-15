@@ -31,12 +31,19 @@ interface mysqlTransaction extends mysqlFuns{
   rollback(): void
 }
 
+interface ResponseData {
+  code: number,
+  message?: string,
+  data?: object
+}
+
 declare module 'egg' {
   interface Application {
     mysql: mysqlFuns
   }
 
   interface Context {
+    send(code?: number, data?: object | string): ResponseData
   }
 
   interface 

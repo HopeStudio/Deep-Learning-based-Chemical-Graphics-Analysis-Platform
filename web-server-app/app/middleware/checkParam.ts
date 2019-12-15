@@ -13,5 +13,5 @@ export default (...option: string[]) => async (ctx: Context, next) => {
     return
   }
 
-  ctx.body = ctx.helper.response(1, `lack of param: ${lackOfParam.join(',')}`)
+  ctx.body = ctx.send(1, `lack of param: ${lackOfParam.join(',')}`)
 }

@@ -4,7 +4,7 @@ export default (app: Application) => {
   const { controller, router, middleware } = app
 
   router.post(
-    '/verification/mail',
+    '/verification',
     middleware.errorHandler(),
     middleware.checkParam('authType', 'authId'),
     controller.verification.mainValidator)
