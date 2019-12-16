@@ -28,6 +28,7 @@ export default (app: Application) => {
     controller.user.login)
 
   router.post(
+    // default: /user/reflesh
     app.config.refleshToken.path,
     middleware.errorHandler(),
     middleware.checkParam('uname'),

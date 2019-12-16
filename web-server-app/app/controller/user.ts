@@ -103,7 +103,7 @@ export default class UserController extends Controller {
 
     const tokenData = {
       uname: user.name,
-      groupId: user.group_id,
+      groupId: user.groupId,
     }
 
     const accessToken = await this.setToken(tokenData)

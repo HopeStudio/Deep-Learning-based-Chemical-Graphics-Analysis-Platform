@@ -290,7 +290,7 @@ setERRCodeMap(
 setERRCodeMap(
   ERRCode.controller.user,
   ERRCode.service.default,
-  19,
+  20,
   'need to login again', 'reflesh token incorrect')
 
 setERRCodeMap(
