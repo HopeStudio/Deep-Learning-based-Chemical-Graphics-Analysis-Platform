@@ -1,9 +1,9 @@
 import { Service } from 'egg'
-import { sign, verify } from 'jsonwebtoken'
+import { sign, verify, Secret, DecodeOptions, SignOptions } from 'jsonwebtoken'
 import { err, ERRCode } from '../error'
 
 export default class JsonWebTokenService extends Service {
-  get privateKey() {
+  get privateKey(): Secret {
     return this.app.config.jwt.privateKey
   }
 
@@ -11,7 +11,7 @@ export default class JsonWebTokenService extends Service {
     ERRCode.controller.default,
     ERRCode.service.jwt,
     11)
-  sign(payload: any, expire: number = 5, options: JWTOption = {}): string {
+  sign(payload: any, expire: number = 5, options: SignOptions = {}): string {
     return sign(payload, this.privateKey, {
       // min
       expiresIn: expire * 60,
@@ -19,12 +19,12 @@ export default class JsonWebTokenService extends Service {
     })
   }
 
-  verify<T>(token: string, options: object = {}): T {
-    return verify(token, this.privateKey, { ...options })
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.jwt,
+    12,
+  )
+  verify<T>(token: string, options?: DecodeOptions): T {
+    return verify(token, this.privateKey, options) as any
   }
-}
-
-interface JWTOption {
-  expiresIn?: number
-  algorithm?: string
 }

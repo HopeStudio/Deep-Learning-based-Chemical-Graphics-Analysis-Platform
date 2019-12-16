@@ -1,4 +1,5 @@
 import { Service } from 'egg'
+import CError, { err, ERRCode } from '../error'
 
 export default class UserService extends Service {
   /**
@@ -8,6 +9,10 @@ export default class UserService extends Service {
    * @returns {Promise<boolean>}
    * @memberof UserService
    */
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.user,
+    11)
   async checkUserName(userName: string): Promise<boolean> {
     const user = await this.getUser({
       name: userName,
@@ -27,6 +32,10 @@ export default class UserService extends Service {
    * @returns {Promise<boolean>}
    * @memberof UserService
    */
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.user,
+    12)
   async checkEmail(email: string): Promise<boolean> {
     const user = await this.getByOAuth({
       auth_type: 'email',
@@ -40,6 +49,11 @@ export default class UserService extends Service {
     return true
   }
 
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.user,
+    13,
+    true)
   async register(registerUser: RegisterUser) {
     const { uname: name, password, authType, authId } = registerUser
     const result = await this.app.mysql.beginTransactionScope(async coon => {
@@ -50,21 +64,29 @@ export default class UserService extends Service {
       })
 
       if (result.affectedRows !== 1) {
-        throw new Error('add user fail')
+        throw new CError(
+          CError.Code(
+            ERRCode.controller.default,
+            ERRCode.service.user,
+            14))
       }
 
       const queryResult = await coon.select<UserSchema[]>('user', {
         where: { name },
-        columns: [ 'id', 'name', 'avatar', 'group_id', 'gender' ],
+        columns: ['id', 'name', 'group_id'],
       })
 
       if (queryResult === null || queryResult.length === 0) {
-        throw new Error('user doesn\'t exist')
+        throw new CError(
+          CError.Code(
+            ERRCode.controller.default,
+            ERRCode.service.user,
+            15))
       }
 
-      const [ user ] = queryResult as UserSchema[]
+      const [user] = queryResult as UserSchema[]
 
-      const { id: user_id } = user
+      const { id: user_id, ...others } = user
 
       const userAuthResult = await coon.insert<OAuthSchemaRegister>('user_oauth', {
         user_id,
@@ -73,86 +95,113 @@ export default class UserService extends Service {
       })
 
       if (userAuthResult.affectedRows !== 1) {
-        throw new Error('user_oauth fail')
+        throw new CError(
+          CError.Code(
+            ERRCode.controller.default,
+            ERRCode.service.user,
+            16))
       }
 
-      return user
+      return others
     }, this.ctx)
 
     return result
   }
 
   /**
-   * get one user information by id or name
+   * get one user full information by id or name
    *
    * @param {GetUserQuery} userQuery
    * @returns
    * @memberof UserService
    */
-  async getUser(userQuery: GetUserQuery) {
+  private async getUser(userQuery: GetUserQuery) {
     const user = await this.app.mysql.get<UserSchema>('user', userQuery)
     return user
   }
 
-  async getByOAuth(oauth: OAuthQuery) {
+  /**
+   * get one user_oauth full information by oauth
+   *
+   * @private
+   * @param {OAuthQuery} oauth
+   * @returns
+   * @memberof UserService
+   */
+  private async getByOAuth(oauth: OAuthQuery) {
     const user = await this.app.mysql.get<OAuthSchema>('user_oauth', oauth)
     return user
   }
 
-  /**
-   * create a user
-   *
-   * @returns
-   * @memberof UserService
-   */
-  async createUser({ name, password }) {
-    const result = await this.app.mysql.insert<UserSchemaForRegister>('user', {
-      name,
-      password,
-      avatar: '/image/default.png',
-    })
-
-    if (result.affectedRows === 1) {
-      // create user successfully
-      return
-    }
-
-    throw new Error('unknow error')
-  }
-
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.user,
+    21,
+    true)
   async loginByName({ name, rawPassword }) {
     const user = await this.getUser({ name })
 
+    const processPassword = this.handlePassword(rawPassword)
+
     if (!user) {
-      throw new Error('user not exsit')
+      throw new CError(
+        CError.Code(
+          ERRCode.controller.default,
+          ERRCode.service.user,
+          17))
     }
 
-    if (user.password === rawPassword) {
-      return true
+    const { password, ...others } = user
+
+    if (user.password === processPassword) {
+      return others
     }
 
-    return false
+    throw new CError(
+      CError.Code(
+        ERRCode.controller.default,
+        ERRCode.service.user,
+        18))
   }
 
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.user,
+    22,
+    true)
   async loginByOAuth({ authId, rawPassword }) {
-    const [ user ] = await this.app.mysql.query<UserSchema>(`
+    const [user] = await this.app.mysql.query<UserSchema>(`
       SELECT user.name name, user.password password, user.group_id group_id
       FROM user
       INNER JOIN user_oauth oauth
       ON user.id = oauth.user_id
-      WHERE oauth.open_id= ?`, [ authId ])
+      WHERE oauth.open_id= ?`, [authId])
 
     if (!user) {
-      throw new Error('user not exsit')
+      throw new CError(
+        CError.Code(
+          ERRCode.controller.default,
+          ERRCode.service.user,
+          19))
     }
+
+    const processPassword = this.handlePassword(rawPassword)
     const { password, ...others } = user
-    if (this.handlePassword(rawPassword) === password) {
+    if (password === processPassword) {
       return others
     }
 
-    return null
+    throw new CError(
+      CError.Code(
+        ERRCode.controller.default,
+        ERRCode.service.user,
+        20))
   }
 
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.user,
+    23)
   private handlePassword(rawPassword: string): string {
     return rawPassword
   }

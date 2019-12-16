@@ -1,4 +1,5 @@
 import { Service } from 'egg'
+import CError, { err, ERRCode } from '../error'
 
 export default class VerificationService extends Service {
   /**
@@ -9,9 +10,17 @@ export default class VerificationService extends Service {
    * @returns {Promise<string>}
    * @memberof VerificationService
    */
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.verification,
+    11,
+    true)
   private async generateVerificationCode(identifier: string, expire: number = 5): Promise<string> {
     if (!identifier) {
-      throw new TypeError('identifier can\'t be empty')
+      throw new CError(CError.Code(
+        ERRCode.controller.default,
+        ERRCode.service.verification,
+        12))
     }
     const verificationCode = this.ctx.helper.getRandomNumberString(5)
     await this.app.redis.set(identifier, verificationCode, 'EX', expire * 60)
@@ -26,6 +35,10 @@ export default class VerificationService extends Service {
    * @returns {Promise<boolean>}
    * @memberof VerificationService
    */
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.verification,
+    13)
   async verifyCode(code: string, authId: string, identifierPrefix: string): Promise<boolean> {
     const identifier = identifierPrefix + authId
     if (!identifier || !code) {
@@ -44,21 +57,28 @@ export default class VerificationService extends Service {
    * @returns
    * @memberof VerificationService
    */
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.verification,
+    14)
   async sendVerificationCodeToMail(receiverMail: string, identifierPrefix?: string) {
     const { expire = 5 } = this.app.config.verificationCode || {}
     const verificationCode = await this.generateVerificationCode(identifierPrefix + receiverMail, expire)
 
     const subjectTemplate = `[${verificationCode}] 化学图像分析平台： 邮箱验证`
     const textTemplate = `您正在注册账号，验证码为${verificationCode}，有效期为${expire}分钟。`
-    const info = await this.ctx.service.mail.send({
-      to: [ receiverMail ],
+
+    await this.ctx.service.mail.send({
+      to: [receiverMail],
       subject: subjectTemplate,
       text: textTemplate,
     })
-
-    return info
   }
 
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.verification,
+    15)
   async sendVerificationCodeToPhone(receiverMail: string, identifierPrefix?: string) {
     const { expire = 5 } = this.app.config.verificationCode || {}
     const verificationCode = await this.generateVerificationCode(identifierPrefix + receiverMail, expire)

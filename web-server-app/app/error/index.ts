@@ -1,5 +1,8 @@
-export default class ERROR extends Error {
+export default class CError extends Error {
   code: number
+  error: CError | Error | undefined
+  usePreMessage: boolean
+
   static Code(
     controllerCode: number = ERRCode.controller.default,
     serviceCode: number = ERRCode.service.default,
@@ -12,21 +15,33 @@ export default class ERROR extends Error {
 
   constructor(
     code: number,
-    message: string | Error = ERRCodeMap[code] || ERRCodeMap[code][0] || 'unknown error',
-    error?: Error) {
+    error?: Error | CError,
+    usePreMessage: boolean = false) {
     super()
-    if (message instanceof Error || error instanceof Error) {
-      this.handleNativeError(message || error)
-      return this
-    }
 
-    this.code = code
-    this.message = message
+    this.code = code || 101010
+    this.error = error
+    this.usePreMessage = usePreMessage
+    this.handleNativeError()
+    this.handleCError()
   }
 
-  handleNativeError(error) {
-    this.message = error.message || error.sqlMessage
-    this.code = 101010
+  handleCError() {
+    if (this.error instanceof CError) {
+      if (this.usePreMessage) {
+        this.code =
+          this.error.code && this.error.code === 101010
+            ? this.code
+            : this.error.code
+        this.message = this.error.message
+      }
+    }
+  }
+
+  handleNativeError() {
+    if (this.error instanceof Error && !(this.error instanceof CError)) {
+      this.message = ERRCodeMap[this.code] && ERRCodeMap[this.code][0] || ERRCodeMap.default
+    }
   }
 
 }
@@ -47,10 +62,12 @@ export const ERRCode = {
   },
 }
 
-export const ERRCodeMap = {}
+export const ERRCodeMap = {
+  default: 'Unknown Error',
+}
 
 const setERRCodeMap = (controllerCode, serviceCode, code, ...args: string[]) => {
-  ERRCodeMap[ERROR.Code(
+  ERRCodeMap[CError.Code(
     controllerCode,
     serviceCode,
     code)] = args
@@ -60,7 +77,8 @@ const setERRCodeMap = (controllerCode, serviceCode, code, ...args: string[]) => 
 export function err(
   controllerCode: number,
   serviceCode: number,
-  code: number = 0) {
+  code: number = 0,
+  usePreMessage: boolean = false) {
   return function (_target, _name, descriptor) {
     const oldFunc = descriptor.value
 
@@ -69,7 +87,7 @@ export function err(
       try {
         result = await oldFunc.apply(this, args)
       } catch (error) {
-        throw new ERROR(ERROR.Code(controllerCode, serviceCode, code))
+        throw new CError(CError.Code(controllerCode, serviceCode, code), error, usePreMessage)
       }
       return result
     }
@@ -81,4 +99,130 @@ setERRCodeMap(
   ERRCode.controller.default,
   ERRCode.service.jwt,
   11,
-  'sign token error')
+  'token sign error')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.jwt,
+  12,
+  'token verify error')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.mail,
+  11,
+  'send mail error')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.sms,
+  11,
+  'send sms error')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  11,
+  'check user error', 'get user error')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  12,
+  'check email error', 'get oauth error')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  13,
+  'register fail', 'transcation error')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  14,
+  'create user fail', 'can not insert user')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  15,
+  'create user fail', 'can not find user after insert')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  16,
+  'create user fail', 'can not insert oauth')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  17,
+  'user is not exist')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  18,
+  'password is incorrect')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  19,
+  'user is not exist', 'user is not exist, in oauth type')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  20,
+  'password is incorrect', 'password is incorrect, in oauth type')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  21,
+  'login error')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  22,
+  'login error', 'login error in oauth')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.user,
+  23,
+  'inner error', 'handle password error')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.verification,
+  11,
+  'inner error', 'generate verification code error')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.verification,
+  12,
+  'inner error', 'generate verification code error: identifier should not\'t be empty')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.verification,
+  13,
+  'fail to verify code')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.verification,
+  14,
+  'fail to send verification code to mail')
+
+setERRCodeMap(
+  ERRCode.controller.default,
+  ERRCode.service.verification,
+  15,
+  'fail to send verification code to phone')

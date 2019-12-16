@@ -1,5 +1,6 @@
 import { Service } from 'egg'
 import { createTransport } from 'nodemailer'
+import { err, ERRCode } from '../error'
 
 export default class MailService extends Service {
   transporter: any
@@ -15,6 +16,10 @@ export default class MailService extends Service {
     })
   }
 
+  @err(
+    ERRCode.controller.default,
+    ERRCode.service.mail,
+    11)
   async send(mailContent: MailContent) {
     if (!this.transporter) {
       await this.init()
