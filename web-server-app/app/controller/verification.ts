@@ -1,4 +1,5 @@
 import { Controller } from 'egg'
+import CError, { err, ERRCode } from '../error'
 
 enum AuthTypes {
   email = 'email',
@@ -6,32 +7,53 @@ enum AuthTypes {
 }
 
 export default class VerificationController extends Controller {
+  @err(
+    ERRCode.controller.verification,
+    ERRCode.service.default,
+    11)
   private async mailValidator() {
     const { authType, authId } = this.ctx.request.body as VerificationData
     if (authType === AuthTypes.email) {
       await this.ctx.service.verification.sendVerificationCodeToMail(authId, authType)
-      this.ctx.body = {
-        code: 0,
-      }
+      this.ctx.send()
     }
   }
 
+  @err(
+    ERRCode.controller.verification,
+    ERRCode.service.default,
+    12)
   private async phoneValidator() {
     const { authType, authId } = this.ctx.request.body as VerificationData
     if (authType === AuthTypes.phone) {
       await this.ctx.service.verification.sendVerificationCodeToPhone(authId, authType)
-      this.ctx.body = {
-        code: 0,
-      }
+      this.ctx.send()
     }
   }
 
+  @err(
+    ERRCode.controller.verification,
+    ERRCode.service.default,
+    14,
+    true)
   async mainValidator() {
-    this.ctx.send(1, 'unsupport auth type')
+    const { authType } = this.ctx.request.body as VerificationData
+    if (!(authType in AuthTypes)) {
+      throw new CError(CError.Code(
+        ERRCode.controller.verification,
+        ERRCode.service.default,
+        13))
+    }
+
     await this.mailValidator()
     await this.phoneValidator()
   }
 
+  @err(
+    ERRCode.controller.verification,
+    ERRCode.service.default,
+    15,
+    true)
   async verifyCode() {
     const { authType, authId, authCode } = this.ctx.request.body as VerifyCodeData
 
@@ -47,7 +69,10 @@ export default class VerificationController extends Controller {
       return
     }
 
-    this.ctx.send(1, 'fail to verify code')
+    throw new CError(CError.Code(
+      ERRCode.controller.verification,
+      ERRCode.service.default,
+      16))
   }
 }
 

@@ -226,3 +226,99 @@ setERRCodeMap(
   ERRCode.service.verification,
   15,
   'fail to send verification code to phone')
+
+setERRCodeMap(
+  ERRCode.controller.user,
+  ERRCode.service.default,
+  11,
+  'fail to check user', 'check user error')
+
+setERRCodeMap(
+  ERRCode.controller.user,
+  ERRCode.service.default,
+  12,
+  'fail to check email', 'check email error')
+
+setERRCodeMap(
+  ERRCode.controller.user,
+  ERRCode.service.default,
+  13,
+  'error to register')
+
+setERRCodeMap(
+  ERRCode.controller.user,
+  ERRCode.service.default,
+  14,
+  'fail to register', 'token incorrect')
+
+setERRCodeMap(
+  ERRCode.controller.user,
+  ERRCode.service.default,
+  15,
+  'fail to login', 'get login token error')
+
+setERRCodeMap(
+  ERRCode.controller.user,
+  ERRCode.service.default,
+  16,
+  'fail to login')
+
+setERRCodeMap(
+  ERRCode.controller.user,
+  ERRCode.service.default,
+  17,
+  'user doesn\'t exist')
+
+setERRCodeMap(
+  ERRCode.controller.user,
+  ERRCode.service.default,
+  18,
+  'fail to reflesh access token')
+
+setERRCodeMap(
+  ERRCode.controller.user,
+  ERRCode.service.default,
+  19,
+  'login timeout, need to login again')
+
+setERRCodeMap(
+  ERRCode.controller.user,
+  ERRCode.service.default,
+  19,
+  'need to login again', 'reflesh token incorrect')
+
+setERRCodeMap(
+  ERRCode.controller.verification,
+  ERRCode.service.default,
+  11,
+  'fail to send verification email')
+
+setERRCodeMap(
+  ERRCode.controller.verification,
+  ERRCode.service.default,
+  12,
+  'fail to send verification sms')
+
+setERRCodeMap(
+  ERRCode.controller.verification,
+  ERRCode.service.default,
+  13,
+  'unspport auth type')
+
+setERRCodeMap(
+  ERRCode.controller.verification,
+  ERRCode.service.default,
+  14,
+  'fail to send verification code')
+
+setERRCodeMap(
+  ERRCode.controller.verification,
+  ERRCode.service.default,
+  15,
+  'verify code error')
+
+setERRCodeMap(
+  ERRCode.controller.verification,
+  ERRCode.service.default,
+  16,
+  'fail to verify code')

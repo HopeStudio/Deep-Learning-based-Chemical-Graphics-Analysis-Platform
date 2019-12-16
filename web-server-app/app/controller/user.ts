@@ -1,7 +1,11 @@
 import { Controller } from 'egg'
-import ERR from '../error'
+import CError, { err, ERRCode } from '../error'
 
 export default class UserController extends Controller {
+  @err(
+    ERRCode.controller.user,
+    ERRCode.service.default,
+    11)
   async checkUserName() {
     const { uname } = this.ctx.request.body
 
@@ -14,6 +18,10 @@ export default class UserController extends Controller {
     this.ctx.send(1, 'has been used')
   }
 
+  @err(
+    ERRCode.controller.user,
+    ERRCode.service.default,
+    12)
   async checkEmail() {
     const { email } = this.ctx.request.body
 
@@ -26,32 +34,65 @@ export default class UserController extends Controller {
     this.ctx.send(1, 'has been used')
   }
 
+  @err(
+    ERRCode.controller.user,
+    ERRCode.service.default,
+    13,
+    true)
   async register() {
     const { uname, password, authType, authToken, authId } = this.ctx.request.body as RegisterUser
 
-    let tokenInfo
-
-    try {
-      tokenInfo = await this.service.jwt.verify<TokenData>(authToken)
-    } catch (error) {
-      throw new ERR(error)
-    }
+    const tokenInfo = await this.service.jwt.verify<TokenInfo>(authToken)
 
     if (tokenInfo && tokenInfo.authType === authType && tokenInfo.authId === authId) {
       const user = await this.service.user.register({ uname, password, authType, authId })
-      this.ctx.send(0, user)
+
+      const accessToken = await this.setToken({
+        uname: user.name,
+        groupId: user.groupId,
+      })
+
+      this.ctx.send(0, { accessToken })
       return
     }
 
-    this.ctx.send(233, 'authToken doesn\'t match')
+    throw new CError(CError.Code(
+      ERRCode.controller.user,
+      ERRCode.service.default,
+      14))
   }
 
+  @err(
+    ERRCode.controller.user,
+    ERRCode.service.default,
+    15)
+  private async setToken(tokenData: LoginTokenData) {
+    const refleshToken = await this.generateRefleshToken(tokenData)
+    const accessToken = await this.generateAccessToken(tokenData)
+
+    this.ctx.cookies.set('reflesh', refleshToken, {
+      httpOnly: true,
+      path: this.app.config.refleshToken.path,
+      // second
+      maxAge: this.app.config.refleshToken.expire * 60,
+    })
+    return accessToken
+  }
+
+  @err(
+    ERRCode.controller.user,
+    ERRCode.service.default,
+    16,
+    true)
   async login() {
     const { authId, password: rawPassword } = this.ctx.request.body
     const user = await this.service.user.loginByOAuth({ authId, rawPassword })
 
     if (!user) {
-      throw new Error('fail')
+      throw new CError(CError.Code(
+        ERRCode.controller.user,
+        ERRCode.service.default,
+        17))
     }
 
     const tokenData = {
@@ -59,18 +100,10 @@ export default class UserController extends Controller {
       groupId: user.group_id,
     }
 
-    const refleshToken = await this.generateRefleshToken(tokenData)
-    const accessToken = await this.generateAccessToken(tokenData)
+    const accessToken = await this.setToken(tokenData)
 
     this.ctx.send(0, {
       accessToken,
-    })
-
-    this.ctx.cookies.set('reflesh', refleshToken, {
-      httpOnly: true,
-      path: this.app.config.refleshToken.path,
-      // second
-      maxAge: this.app.config.refleshToken.expire * 60,
     })
   }
 
@@ -88,12 +121,19 @@ export default class UserController extends Controller {
     return token
   }
 
+  @err(
+    ERRCode.controller.user,
+    ERRCode.service.default,
+    18,
+    true)
   async refleshAccessToken() {
     const { uname } = this.ctx.request.body
     const refleshToken = this.ctx.cookies.get('reflesh')
     if (!refleshToken) {
-      this.ctx.send(233, 'need to login again')
-      return
+      throw new CError(CError.Code(
+        ERRCode.controller.user,
+        ERRCode.service.default,
+        19))
     }
 
     const refleshTokenData = await this.service.jwt.verify<RefleshTokenData>(refleshToken)
@@ -107,7 +147,10 @@ export default class UserController extends Controller {
       return
     }
 
-    this.ctx.send(0, 'token incorrect')
+    throw new CError(CError.Code(
+      ERRCode.controller.user,
+      ERRCode.service.default,
+      20))
   }
 }
 
@@ -124,7 +167,7 @@ enum AuthTypes {
   phone = 'phone',
 }
 
-interface TokenData {
+interface TokenInfo {
   authType: string
   authId: string
 }

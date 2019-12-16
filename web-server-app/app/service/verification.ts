@@ -69,7 +69,7 @@ export default class VerificationService extends Service {
     const textTemplate = `您正在注册账号，验证码为${verificationCode}，有效期为${expire}分钟。`
 
     await this.ctx.service.mail.send({
-      to: [receiverMail],
+      to: [ receiverMail ],
       subject: subjectTemplate,
       text: textTemplate,
     })
