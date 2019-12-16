@@ -85,8 +85,14 @@ export default class UserController extends Controller {
     16,
     true)
   async login() {
-    const { authId, password: rawPassword } = this.ctx.request.body
-    const user = await this.service.user.loginByOAuth({ authId, rawPassword })
+    const { uname, authId, password: rawPassword } = this.ctx.request.body
+
+    let user
+    if (uname) {
+      user = await this.service.user.loginByName({ name: uname, rawPassword })
+    } else if (authId) {
+      user = await this.service.user.loginByOAuth({ authId, rawPassword })
+    }
 
     if (!user) {
       throw new CError(CError.Code(

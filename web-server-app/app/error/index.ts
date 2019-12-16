@@ -15,13 +15,21 @@ export default class CError extends Error {
 
   constructor(
     code: number,
-    error?: Error | CError,
+    error?: Error | CError | string,
     usePreMessage: boolean = false) {
     super()
 
     this.code = code || 101010
-    this.error = error
+
+    if (typeof error === 'string') {
+      this.message = error
+    } else {
+      this.error = error
+      this.message = ERRCodeMap[this.code] && ERRCodeMap[this.code][0] || ERRCodeMap.default
+    }
+
     this.usePreMessage = usePreMessage
+
     this.handleNativeError()
     this.handleCError()
   }
@@ -30,7 +38,7 @@ export default class CError extends Error {
     if (this.error instanceof CError) {
       if (this.usePreMessage) {
         this.code =
-          this.error.code && this.error.code === 101010
+          this.error.code && (this.error.code === 101010)
             ? this.code
             : this.error.code
         this.message = this.error.message
@@ -39,9 +47,7 @@ export default class CError extends Error {
   }
 
   handleNativeError() {
-    if (this.error instanceof Error && !(this.error instanceof CError)) {
-      this.message = ERRCodeMap[this.code] && ERRCodeMap[this.code][0] || ERRCodeMap.default
-    }
+    // s
   }
 
 }
@@ -303,7 +309,7 @@ setERRCodeMap(
   ERRCode.controller.verification,
   ERRCode.service.default,
   13,
-  'unspport auth type')
+  'unsupport auth type')
 
 setERRCodeMap(
   ERRCode.controller.verification,

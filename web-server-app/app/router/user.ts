@@ -24,7 +24,7 @@ export default (app: Application) => {
   router.post(
     '/user/login',
     middleware.errorHandler(),
-    middleware.checkParam('authId', 'password'),
+    middleware.checkParam([ 'authId', 'uname' ], 'password'),
     controller.user.login)
 
   router.post(

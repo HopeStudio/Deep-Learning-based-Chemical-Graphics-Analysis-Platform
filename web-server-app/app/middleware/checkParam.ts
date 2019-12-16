@@ -1,12 +1,25 @@
 import { Context } from 'egg'
+import CError, { ERRCode } from '../error'
 
-export default (...option: string[]) => async (ctx: Context, next) => {
+function check(value: any) {
+  if (value === undefined || value === '') {
+    return true
+  }
+  return false
+}
+
+export default (...option: Array<string | string[]>) => async (ctx: Context, next) => {
   const lackOfParam = option.filter(requireParam => {
-    const value = ctx.request.body[requireParam]
-    if (value === undefined || value === '') {
-      return true
+    if (Array.isArray(requireParam)) {
+      return requireParam.every(param => {
+        const value = ctx.request.body[param]
+
+        return check(value)
+      })
     }
-    return false
+
+    const value = ctx.request.body[requireParam]
+    return check(value)
   })
 
   if (lackOfParam.length === 0) {
@@ -14,5 +27,11 @@ export default (...option: string[]) => async (ctx: Context, next) => {
     return
   }
 
-  ctx.send(1, `lack of param: ${lackOfParam.join(',')}`)
+  const message = `lack of param: ${lackOfParam.map(value => Array.isArray(value) ? value.join(' or ') : value).join(',')}`
+
+  throw new CError(CError.Code(
+    ERRCode.controller.default,
+    ERRCode.service.default,
+    11),
+    message)
 }

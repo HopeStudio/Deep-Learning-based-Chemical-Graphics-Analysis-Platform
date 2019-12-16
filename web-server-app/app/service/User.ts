@@ -141,10 +141,10 @@ export default class UserService extends Service {
     ERRCode.service.user,
     21,
     true)
-  async loginByName({ name, rawPassword }) {
+  async loginByName({ name, rawPassword }): Promise<LoginUser> {
     const user = await this.getUser({ name })
 
-    const processPassword = this.handlePassword(rawPassword)
+    const processPassword = await this.handlePassword(rawPassword)
 
     if (!user) {
       throw new CError(
@@ -154,10 +154,13 @@ export default class UserService extends Service {
           17))
     }
 
-    const { password, ...others } = user
+    const { password } = user
 
-    if (user.password === processPassword) {
-      return others
+    if (password === processPassword) {
+      return {
+        name: user.name,
+        groupId: user.group_id,
+      }
     }
 
     throw new CError(
@@ -172,7 +175,7 @@ export default class UserService extends Service {
     ERRCode.service.user,
     22,
     true)
-  async loginByOAuth({ authId, rawPassword }) {
+  async loginByOAuth({ authId, rawPassword }): Promise<LoginUser> {
     const [ user ] = await this.app.mysql.query<UserSchema>(`
       SELECT user.name name, user.password password, user.group_id group_id
       FROM user
@@ -188,10 +191,13 @@ export default class UserService extends Service {
           19))
     }
 
-    const processPassword = this.handlePassword(rawPassword)
-    const { password, ...others } = user
+    const processPassword = await this.handlePassword(rawPassword)
+    const { password } = user
     if (password === processPassword) {
-      return others
+      return {
+        name: user.name,
+        groupId: user.group_id,
+      }
     }
 
     throw new CError(
@@ -255,4 +261,9 @@ interface RegisterUser {
   password: string
   authType: string
   authId: string
+}
+
+interface LoginUser {
+  name,
+  groupId
 }
