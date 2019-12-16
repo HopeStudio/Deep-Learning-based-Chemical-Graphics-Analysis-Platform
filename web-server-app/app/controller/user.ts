@@ -1,4 +1,5 @@
 import { Controller } from 'egg'
+import ERR from '../error'
 
 export default class UserController extends Controller {
   async checkUserName() {
@@ -33,7 +34,7 @@ export default class UserController extends Controller {
     try {
       tokenInfo = await this.service.jwt.verify<TokenData>(authToken)
     } catch (error) {
-      console.log(error)
+      throw new ERR(error)
     }
 
     if (tokenInfo && tokenInfo.authType === authType && tokenInfo.authId === authId) {

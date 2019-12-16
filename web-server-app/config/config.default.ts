@@ -46,7 +46,7 @@ export default (appInfo: EggAppInfo) => {
     accessToken: {
       // 1 h
       expire: 60,
-    }
+    },
   }
 
   // the return config will combines to EggAppConfig

@@ -2,7 +2,8 @@ import { Context } from 'egg'
 
 export default (...option: string[]) => async (ctx: Context, next) => {
   const lackOfParam = option.filter(requireParam => {
-    if (ctx.request.body[requireParam] === undefined) {
+    const value = ctx.request.body[requireParam]
+    if (value === undefined || value === '') {
       return true
     }
     return false

@@ -55,14 +55,14 @@ export default class UserService extends Service {
 
       const queryResult = await coon.select<UserSchema[]>('user', {
         where: { name },
-        columns: ['id', 'name', 'avatar', 'group_id', 'gender'],
+        columns: [ 'id', 'name', 'avatar', 'group_id', 'gender' ],
       })
 
       if (queryResult === null || queryResult.length === 0) {
         throw new Error('user doesn\'t exist')
       }
 
-      const [user] = queryResult as UserSchema[]
+      const [ user ] = queryResult as UserSchema[]
 
       const { id: user_id } = user
 
@@ -135,12 +135,12 @@ export default class UserService extends Service {
   }
 
   async loginByOAuth({ authId, rawPassword }) {
-    const [user] = await this.app.mysql.query<UserSchema>(`
+    const [ user ] = await this.app.mysql.query<UserSchema>(`
       SELECT user.name name, user.password password, user.group_id group_id
       FROM user
       INNER JOIN user_oauth oauth
       ON user.id = oauth.user_id
-      WHERE oauth.open_id= ?`, [authId])
+      WHERE oauth.open_id= ?`, [ authId ])
 
     if (!user) {
       throw new Error('user not exsit')
