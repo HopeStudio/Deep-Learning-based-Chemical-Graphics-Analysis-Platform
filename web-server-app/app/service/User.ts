@@ -9,7 +9,7 @@ export default class UserService extends Service {
    * @memberof UserService
    */
   async checkUserName(userName: string): Promise<boolean> {
-    const user = await this.get({
+    const user = await this.getUser({
       name: userName,
     })
 
@@ -89,7 +89,7 @@ export default class UserService extends Service {
    * @returns
    * @memberof UserService
    */
-  async get(userQuery: GetUserQuery) {
+  async getUser(userQuery: GetUserQuery) {
     const user = await this.app.mysql.get<UserSchema>('user', userQuery)
     return user
   }
@@ -118,6 +118,43 @@ export default class UserService extends Service {
     }
 
     throw new Error('unknow error')
+  }
+
+  async loginByName({ name, rawPassword }) {
+    const user = await this.getUser({ name })
+
+    if (!user) {
+      throw new Error('user not exsit')
+    }
+
+    if (user.password === rawPassword) {
+      return true
+    }
+
+    return false
+  }
+
+  async loginByOAuth({ authId, rawPassword }) {
+    const [user] = await this.app.mysql.query<UserSchema>(`
+      SELECT user.name name, user.password password, user.group_id group_id
+      FROM user
+      INNER JOIN user_oauth oauth
+      ON user.id = oauth.user_id
+      WHERE oauth.open_id= ?`, [authId])
+
+    if (!user) {
+      throw new Error('user not exsit')
+    }
+    const { password, ...others } = user
+    if (this.handlePassword(rawPassword) === password) {
+      return others
+    }
+
+    return null
+  }
+
+  private handlePassword(rawPassword: string): string {
+    return rawPassword
   }
 }
 

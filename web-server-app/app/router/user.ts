@@ -20,4 +20,16 @@ export default (app: Application) => {
     middleware.errorHandler(),
     middleware.checkParam('uname', 'password', 'authType', 'authToken', 'authId'),
     controller.user.register)
+
+  router.post(
+    '/user/login',
+    middleware.errorHandler(),
+    middleware.checkParam('authId', 'password'),
+    controller.user.login)
+
+  router.post(
+    app.config.refleshToken.path,
+    middleware.errorHandler(),
+    middleware.checkParam('uname'),
+    controller.user.refleshAccessToken)
 }

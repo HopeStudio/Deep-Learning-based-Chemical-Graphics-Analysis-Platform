@@ -44,6 +44,70 @@ export default class UserController extends Controller {
 
     this.ctx.send(233, 'authToken doesn\'t match')
   }
+
+  async login() {
+    const { authId, password: rawPassword } = this.ctx.request.body
+    const user = await this.service.user.loginByOAuth({ authId, rawPassword })
+
+    if (!user) {
+      throw new Error('fail')
+    }
+
+    const tokenData = {
+      uname: user.name,
+      groupId: user.group_id,
+    }
+
+    const refleshToken = await this.generateRefleshToken(tokenData)
+    const accessToken = await this.generateAccessToken(tokenData)
+
+    this.ctx.send(0, {
+      accessToken,
+    })
+
+    this.ctx.cookies.set('reflesh', refleshToken, {
+      httpOnly: true,
+      path: this.app.config.refleshToken.path,
+      // second
+      maxAge: this.app.config.refleshToken.expire * 60,
+    })
+  }
+
+  async generateRefleshToken(user: LoginTokenData): Promise<string> {
+    const payload: RefleshTokenData = { ...user, tokenType: 'reflesh' }
+    const token = await this.service.jwt.sign(payload, this.app.config.refleshToken.expire)
+
+    return token
+  }
+
+  private async generateAccessToken(user: LoginTokenData): Promise<string> {
+    const payload: AccessTokenData = { ...user, tokenType: 'access' }
+    const token = await this.service.jwt.sign(payload, this.app.config.accessToken.expire)
+
+    return token
+  }
+
+  async refleshAccessToken() {
+    const { uname } = this.ctx.request.body
+    const refleshToken = this.ctx.cookies.get('reflesh')
+    if (!refleshToken) {
+      this.ctx.send(233, 'need to login again')
+      return
+    }
+
+    const refleshTokenData = await this.service.jwt.verify<RefleshTokenData>(refleshToken)
+    if (refleshTokenData.uname === uname && refleshTokenData.groupId) {
+      const accessToken = await this.generateAccessToken({
+        uname: refleshTokenData.uname,
+        groupId: refleshTokenData.groupId,
+      })
+
+      this.ctx.send(0, { accessToken })
+      return
+    }
+
+    this.ctx.send(0, 'token incorrect')
+  }
 }
 
 interface RegisterUser {
@@ -62,4 +126,18 @@ enum AuthTypes {
 interface TokenData {
   authType: string
   authId: string
+}
+
+interface LoginTokenData {
+  uname: string
+  groupId: number
+  [prop: string]: any
+}
+
+interface RefleshTokenData extends LoginTokenData {
+  tokenType: 'reflesh'
+}
+
+interface AccessTokenData extends LoginTokenData {
+  tokenType: 'access'
 }

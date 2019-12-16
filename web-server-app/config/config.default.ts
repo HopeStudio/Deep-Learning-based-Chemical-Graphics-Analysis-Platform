@@ -34,6 +34,19 @@ export default (appInfo: EggAppInfo) => {
     jwt: {
       privateKey: 'Deep Learning-based Chemical Graphics Analysis Platform BackEnd main server',
     },
+
+    // reflesh token
+    refleshToken: {
+      // 1 day
+      expire: 24 * 60,
+      path: '/user/reflesh',
+    },
+
+    // access token
+    accessToken: {
+      // 1 h
+      expire: 60,
+    }
   }
 
   // the return config will combines to EggAppConfig
