@@ -1,12 +1,11 @@
 import { Service } from 'egg'
-import { err, ERRCode } from '../error'
+import { err } from '../decorator'
+
+err.type.service().module.sms().save()
 
 export default class SMSService extends Service {
 
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.sms,
-    11)
+  @err.internal().message('send sms error').code(11)
   async send(verificationCode: string, expire: number) {
     const result = await this.ctx.curl<Result>('http://api01.monyun.cn:7901/sms/v2/std/single_send', {
       method: 'POST',
@@ -26,6 +25,8 @@ export default class SMSService extends Service {
     throw new Error('fail to send sms')
   }
 }
+
+err.restore()
 
 interface Result {
   result: number

@@ -1,5 +1,8 @@
 import { Service } from 'egg'
-import CError, { err, ERRCode } from '../error'
+import CError from '../error'
+import { err } from '../decorator'
+
+err.type.service().module.verification().save()
 
 export default class VerificationService extends Service {
   /**
@@ -10,17 +13,12 @@ export default class VerificationService extends Service {
    * @returns {Promise<string>}
    * @memberof VerificationService
    */
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.verification,
-    11,
-    true)
+  @err.internal().message('generate verification code error').code(11)
   private async generateVerificationCode(identifier: string, expire: number = 5): Promise<string> {
     if (!identifier) {
-      throw new CError(CError.Code(
-        ERRCode.controller.default,
-        ERRCode.service.verification,
-        12))
+      throw new CError(
+        'generate verification code error: identifier should not\'t be empty',
+        err.type.service().module.verification().errCode(12))
     }
     const verificationCode = this.ctx.helper.getRandomNumberString(5)
     await this.app.redis.set(identifier, verificationCode, 'EX', expire * 60)
@@ -35,10 +33,7 @@ export default class VerificationService extends Service {
    * @returns {Promise<boolean>}
    * @memberof VerificationService
    */
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.verification,
-    13)
+  @err.internal().message('fail to verify code').code(13)
   async verifyCode(code: string, authId: string, identifierPrefix: string): Promise<boolean> {
     const identifier = identifierPrefix + authId
     if (!identifier || !code) {
@@ -57,10 +52,7 @@ export default class VerificationService extends Service {
    * @returns
    * @memberof VerificationService
    */
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.verification,
-    14)
+  @err.internal().message('fail to send verification code to mail').code(14)
   async sendVerificationCodeToMail(receiverMail: string, identifierPrefix?: string) {
     const { expire = 5 } = this.app.config.verificationCode || {}
     const verificationCode = await this.generateVerificationCode(identifierPrefix + receiverMail, expire)
@@ -75,13 +67,12 @@ export default class VerificationService extends Service {
     })
   }
 
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.verification,
-    15)
+  @err.internal().message('fail to send verification code to phone').code(15)
   async sendVerificationCodeToPhone(receiverMail: string, identifierPrefix?: string) {
     const { expire = 5 } = this.app.config.verificationCode || {}
     const verificationCode = await this.generateVerificationCode(identifierPrefix + receiverMail, expire)
     await this.ctx.service.sms.send(verificationCode, expire)
   }
 }
+
+err.restore()

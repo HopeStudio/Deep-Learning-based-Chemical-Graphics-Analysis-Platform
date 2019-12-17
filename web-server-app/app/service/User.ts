@@ -1,6 +1,9 @@
 import { Service } from 'egg'
 import * as crypto from 'crypto'
-import CError, { err, ERRCode } from '../error'
+import CError from '../error'
+import { err } from '../decorator'
+
+err.type.service().module.user().save()
 
 export default class UserService extends Service {
   /**
@@ -10,10 +13,7 @@ export default class UserService extends Service {
    * @returns {Promise<boolean>}
    * @memberof UserService
    */
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.user,
-    11)
+  @err.internal().message('check user error', 'get user error').code(11)
   async checkUserName(userName: string): Promise<boolean> {
     const user = await this.getUser({
       name: userName,
@@ -33,10 +33,7 @@ export default class UserService extends Service {
    * @returns {Promise<boolean>}
    * @memberof UserService
    */
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.user,
-    12)
+  @err.internal().message('check email error', 'get oauth error').code(12)
   async checkEmail(email: string): Promise<boolean> {
     const user = await this.getByOAuth({
       auth_type: 'email',
@@ -50,11 +47,7 @@ export default class UserService extends Service {
     return true
   }
 
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.user,
-    13,
-    true)
+  @err.internal().message('register fail', 'transcation error').code(13)
   async register(registerUser: RegisterUser) {
     const { uname: name, password, authType, authId } = registerUser
     const result = await this.app.mysql.beginTransactionScope(async coon => {
@@ -69,10 +62,11 @@ export default class UserService extends Service {
 
       if (result.affectedRows !== 1) {
         throw new CError(
-          CError.Code(
-            ERRCode.controller.default,
-            ERRCode.service.user,
-            14))
+          'create user fail',
+          err.type.service().module.user().errCode(14),
+          true,
+          undefined,
+          'can not insert user')
       }
 
       const queryResult = await coon.select<UserSchema[]>('user', {
@@ -82,10 +76,9 @@ export default class UserService extends Service {
 
       if (queryResult === null || queryResult.length === 0) {
         throw new CError(
-          CError.Code(
-            ERRCode.controller.default,
-            ERRCode.service.user,
-            15))
+          'can not find user after insert',
+          err.type.service().module.user().errCode(15),
+          true)
       }
 
       const [ user ] = queryResult as UserSchema[]
@@ -100,10 +93,9 @@ export default class UserService extends Service {
 
       if (userAuthResult.affectedRows !== 1) {
         throw new CError(
-          CError.Code(
-            ERRCode.controller.default,
-            ERRCode.service.user,
-            16))
+          'can not insert oauth',
+          err.type.service().module.user().errCode(16),
+          true)
       }
 
       return {
@@ -140,20 +132,15 @@ export default class UserService extends Service {
     return user
   }
 
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.user,
-    21,
-    true)
+  @err.internal().message('login error').code(21)
   async loginByName({ name, rawPassword }): Promise<LoginUser> {
     const user = await this.getUser({ name })
 
     if (!user) {
       throw new CError(
-        CError.Code(
-          ERRCode.controller.default,
-          ERRCode.service.user,
-          17))
+        'user is not exist',
+        err.type.service().module.user().errCode(17),
+        true)
     }
 
     const { password, salt } = user
@@ -167,17 +154,12 @@ export default class UserService extends Service {
     }
 
     throw new CError(
-      CError.Code(
-        ERRCode.controller.default,
-        ERRCode.service.user,
-        18))
+      'password is incorrect',
+      err.type.service().module.user().errCode(18),
+      false)
   }
 
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.user,
-    22,
-    true)
+  @err.internal().message('login error in oauth').code(22)
   async loginByOAuth({ authId, rawPassword }): Promise<LoginUser> {
     const [ user ] = await this.app.mysql.query<UserSchema>(`
       SELECT user.name name, user.password password, user.group_id group_id, user.salt salt
@@ -188,10 +170,9 @@ export default class UserService extends Service {
 
     if (!user) {
       throw new CError(
-        CError.Code(
-          ERRCode.controller.default,
-          ERRCode.service.user,
-          19))
+        'user is not exist, in oauth type',
+        err.type.service().module.user().errCode(19),
+        true)
     }
 
     const { password, salt } = user
@@ -204,16 +185,12 @@ export default class UserService extends Service {
     }
 
     throw new CError(
-      CError.Code(
-        ERRCode.controller.default,
-        ERRCode.service.user,
-        20))
+      'password is incorrect, in oauth type',
+      err.type.service().module.user().errCode(20),
+      true)
   }
 
-  @err(
-    ERRCode.controller.default,
-    ERRCode.service.user,
-    23)
+  @err.internal().message('handle password error').code(23)
   private handlePassword(rawPassword: string, salt: string): string {
     const hmac = crypto.createHmac('sha512', salt)
     const processPassword = hmac.update(rawPassword).digest('hex')
@@ -225,6 +202,8 @@ export default class UserService extends Service {
   }
 
 }
+
+err.restore()
 
 enum Gender {
   male = 'M',

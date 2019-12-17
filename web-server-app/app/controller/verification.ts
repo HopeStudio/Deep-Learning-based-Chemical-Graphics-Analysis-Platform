@@ -1,6 +1,6 @@
 import { Controller } from 'egg'
-import CError from '../error/CError'
-import { err } from '../decorator'
+import CError from '../error'
+import { err, param } from '../decorator'
 
 enum AuthTypes {
   email = 'email',
@@ -35,6 +35,7 @@ export default class VerificationController extends Controller {
   @err.type.controller().module.verification()
     .message('fail to send verification code')
     .code(13)
+  @param('authType', 'authId')
   async mainValidator() {
     const { authType } = this.ctx.request.body as VerificationData
     if (!(authType in AuthTypes)) {
@@ -51,6 +52,7 @@ export default class VerificationController extends Controller {
   @err.type.controller().module.verification().internal()
     .message('verify code error')
     .code(15)
+  @param('authType', 'authId', 'authCode')
   async verifyCode() {
     const { authType, authId, authCode } = this.ctx.request.body as VerifyCodeData
 

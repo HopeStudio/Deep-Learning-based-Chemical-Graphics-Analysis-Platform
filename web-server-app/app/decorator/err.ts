@@ -33,13 +33,15 @@ function errDecorator(
 class ERR {
   type: ERRType
   module: ERRModule
-  selectedCode = {
+  private selectedCode = {
     type: 10,
     module: 10,
     code: 10,
   }
-  isInternal: boolean | undefined
-  errMessage: string | undefined
+  private isInternal: boolean = false
+  private errMessage: string | undefined
+  private innerMessage: string | undefined
+  private isSave: boolean = false
 
   constructor() {
     this.type = Object.create({})
@@ -66,19 +68,34 @@ class ERR {
     return this
   }
 
-  message(str: string) {
-    this.errMessage = str
+  save() {
+    this.isSave = true
     return this
   }
 
-  reset() {
-    this.selectedCode = {
-      type: 10,
-      module: 10,
-      code: 10,
+  restore() {
+    this.isSave = false
+    this.reset()
+    return this
+  }
+
+  message(errMessage: string, innerMessage?: string) {
+    this.errMessage = errMessage
+    this.innerMessage = innerMessage
+    return this
+  }
+
+  private reset() {
+    if (!this.isSave) {
+      this.selectedCode = {
+        type: 10,
+        module: 10,
+        code: 10,
+      }
     }
+    this.selectedCode.code = 10
     this.errMessage = undefined
-    this.isInternal = undefined
+    this.isInternal = false
   }
 
   code(detailCode: number = this.selectedCode.code) {

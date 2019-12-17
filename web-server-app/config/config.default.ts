@@ -3,7 +3,7 @@ import { EggAppConfig, EggAppInfo, PowerPartial } from 'egg'
 export default (appInfo: EggAppInfo) => {
   const config: PowerPartial<EggAppConfig> = {
     keys: appInfo.name + '_1576210091479_6832',
-    middleware: [],
+    middleware: [ 'errorHandler' ],
 
     // mysql server config
     mysql: {

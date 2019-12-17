@@ -1,12 +1,11 @@
 import { Controller } from 'egg'
-import CError, { err, ERRCode } from '../error'
-import param from '../decorator/param'
+import { param, err } from '../decorator'
+import CError from '../error'
+
+err.type.controller().module.user().save()
 
 export default class UserController extends Controller {
-  @err(
-    ERRCode.controller.user,
-    ERRCode.service.default,
-    11)
+  @err.message('fail to check user', 'check user error').code(11)
   @param('uname')
   async checkUserName() {
     const { uname } = this.ctx.request.body
@@ -20,10 +19,8 @@ export default class UserController extends Controller {
     this.ctx.send(1, 'has been used')
   }
 
-  @err(
-    ERRCode.controller.user,
-    ERRCode.service.default,
-    12)
+  @err.message('fail to check email', 'check email error').code(12)
+  @param('email')
   async checkEmail() {
     const { email } = this.ctx.request.body
 
@@ -36,11 +33,8 @@ export default class UserController extends Controller {
     this.ctx.send(1, 'has been used')
   }
 
-  @err(
-    ERRCode.controller.user,
-    ERRCode.service.default,
-    13,
-    true)
+  @err.message('error to register').code(13)
+  @param('uname', 'password', 'authType', 'authToken', 'authId')
   async register() {
     const { uname, password, authType, authToken, authId } = this.ctx.request.body as RegisterUser
 
@@ -58,16 +52,15 @@ export default class UserController extends Controller {
       return
     }
 
-    throw new CError(CError.Code(
-      ERRCode.controller.user,
-      ERRCode.service.default,
-      14))
+    throw new CError(
+      'fail to register',
+      err.type.controller().module.user().errCode(14),
+      false,
+      undefined,
+      'token incorrect')
   }
 
-  @err(
-    ERRCode.controller.user,
-    ERRCode.service.default,
-    15)
+  @err.message('fail to login', 'get login token error').code(15)
   private async setToken(tokenData: LoginTokenData) {
     const refleshToken = await this.generateRefleshToken(tokenData)
     const accessToken = await this.generateAccessToken(tokenData)
@@ -81,11 +74,8 @@ export default class UserController extends Controller {
     return accessToken
   }
 
-  @err(
-    ERRCode.controller.user,
-    ERRCode.service.default,
-    16,
-    true)
+  @err.message('fail to login').code(16)
+  @param([ 'authId', 'uname' ], 'password')
   async login() {
     const { uname, authId, password: rawPassword } = this.ctx.request.body
 
@@ -97,10 +87,10 @@ export default class UserController extends Controller {
     }
 
     if (!user) {
-      throw new CError(CError.Code(
-        ERRCode.controller.user,
-        ERRCode.service.default,
-        17))
+      throw new CError(
+        'user doesn\'t exist',
+        err.type.controller().module.user().errCode(17),
+        true)
     }
 
     const tokenData = {
@@ -115,7 +105,7 @@ export default class UserController extends Controller {
     })
   }
 
-  async generateRefleshToken(user: LoginTokenData): Promise<string> {
+  private async generateRefleshToken(user: LoginTokenData): Promise<string> {
     const payload: RefleshTokenData = { ...user, tokenType: 'reflesh' }
     const token = await this.service.jwt.sign(payload, this.app.config.refleshToken.expire)
 
@@ -129,19 +119,15 @@ export default class UserController extends Controller {
     return token
   }
 
-  @err(
-    ERRCode.controller.user,
-    ERRCode.service.default,
-    18,
-    true)
+  @err.message('fail to reflesh access token').code(18)
+  @param('uname')
   async refleshAccessToken() {
     const { uname } = this.ctx.request.body
     const refleshToken = this.ctx.cookies.get('reflesh')
     if (!refleshToken) {
-      throw new CError(CError.Code(
-        ERRCode.controller.user,
-        ERRCode.service.default,
-        19))
+      throw new CError(
+        'login timeout, need to login again',
+        err.type.controller().module.user().errCode(19))
     }
 
     const refleshTokenData = await this.service.jwt.verify<RefleshTokenData>(refleshToken)
@@ -155,10 +141,12 @@ export default class UserController extends Controller {
       return
     }
 
-    throw new CError(CError.Code(
-      ERRCode.controller.user,
-      ERRCode.service.default,
-      20))
+    throw new CError(
+      'need to login again',
+      err.type.controller().module.user().errCode(20),
+      false,
+      undefined,
+      'reflesh token incorrect')
   }
 
   async createUser() {
@@ -176,6 +164,8 @@ export default class UserController extends Controller {
     // reset
   }
 }
+
+err.restore()
 
 interface RegisterUser {
   uname: string
