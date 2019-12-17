@@ -2,7 +2,7 @@ import errorMessage from './errorMessage'
 
 export default class CError extends Error {
   code: number
-  internal: boolean
+  internal: boolean = true
   error: CError | Error | undefined
 
   constructor(
@@ -17,8 +17,8 @@ export default class CError extends Error {
     this.internal = internal
     this.error = error
 
-    if (errorMessage[errorCode]) {
-      console.warn(`this errorCode \`${errorCode}\` has been used by \`${errorMessage[errorCode]}\`, message now is \`${message}\``)
+    if (errorMessage[errorCode] && errorMessage[errorCode].message !== message) {
+      console.log(`\x1b[42m\x1b[30m ErrorCode duplicate \x1b[0m: This ErrorCode \x1b[32m${errorCode}\x1b[0m has been used by \`${errorMessage[errorCode]}\`, message now is \`${message}\``)
     }
     errorMessage[errorCode] = message
 

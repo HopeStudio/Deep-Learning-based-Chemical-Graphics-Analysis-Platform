@@ -1,5 +1,5 @@
 import { Controller } from 'egg'
-import CError, { ERRCode } from '../error'
+import CError from '../error/CError'
 import { err } from '../decorator'
 
 enum AuthTypes {
@@ -8,24 +8,22 @@ enum AuthTypes {
 }
 
 export default class VerificationController extends Controller {
-  @err(
-    ERRCode.controller.verification,
-    ERRCode.service.default,
-    11)
-    'fail to send verification email'
+
+  @err.type.controller().module.verification().internal()
+    .message('fail to send verification email')
+    .code(11)
   private async mailValidator() {
     const { authType, authId } = this.ctx.request.body as VerificationData
     if (authType === AuthTypes.email) {
       await this.ctx.service.verification.sendVerificationCodeToMail(authId, authType)
       this.ctx.send()
     }
+    throw new Error('233')
   }
 
-  @err(
-    ERRCode.controller.verification,
-    ERRCode.service.default,
-    12)
-    'fail to send verification sms'
+  @err.type.controller().module.verification().internal()
+    .message('fail to send verification sms')
+    .code(12)
   private async phoneValidator() {
     const { authType, authId } = this.ctx.request.body as VerificationData
     if (authType === AuthTypes.phone) {
@@ -34,31 +32,25 @@ export default class VerificationController extends Controller {
     }
   }
 
-  @err(
-    ERRCode.controller.verification,
-    ERRCode.service.default,
-    14,
-    true)
-    'fail to send verification code'
+  @err.type.controller().module.verification()
+    .message('fail to send verification code')
+    .code(13)
   async mainValidator() {
     const { authType } = this.ctx.request.body as VerificationData
     if (!(authType in AuthTypes)) {
-      throw new CError(CError.Code(
-        ERRCode.controller.verification,
-        ERRCode.service.default,
-        13))
-        'unsupport auth type'
+      throw new CError(
+        'unsupport auth type',
+        err.type.controller().module.verification().errCode(14),
+        false)
     }
 
     await this.mailValidator()
     await this.phoneValidator()
   }
 
-  @err(
-    ERRCode.controller.verification,
-    ERRCode.service.default,
-    15,)
-    'verify code error'
+  @err.type.controller().module.verification().internal()
+    .message('verify code error')
+    .code(15)
   async verifyCode() {
     const { authType, authId, authCode } = this.ctx.request.body as VerifyCodeData
 
@@ -74,10 +66,10 @@ export default class VerificationController extends Controller {
       return
     }
 
-    throw new CError(CError.Code(
-      ERRCode.controller.verification,
-      ERRCode.service.default,
-      16))
+    throw new CError(
+      'fail to verify code',
+      err.type.controller().module.verification().errCode(16),
+      false)
   }
 }
 

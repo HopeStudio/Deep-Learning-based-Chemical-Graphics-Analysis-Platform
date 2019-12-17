@@ -1,5 +1,6 @@
 import errorCode from '../error/errorCode'
 import CError from '../error/cerror'
+import errorMessage from '../error/errorMessage'
 
 function errDecorator(
   errCode: number,
@@ -30,8 +31,8 @@ function errDecorator(
  * @class ERR
  */
 class ERR {
-  type = {}
-  module = {}
+  type: ERRType
+  module: ERRModule
   selectedCode = {
     type: 10,
     module: 10,
@@ -41,6 +42,8 @@ class ERR {
   errMessage: string | undefined
 
   constructor() {
+    this.type = Object.create({})
+    this.module = Object.create({})
     for (const codeType in errorCode.type) {
       this.type[codeType] = () => {
         // type: 11xxxx
@@ -50,9 +53,9 @@ class ERR {
     }
 
     for (const codeType in errorCode.module) {
-      this.type[codeType] = () => {
+      this.module[codeType] = () => {
         // module: xx11xx
-        this.selectedCode.module = errorCode.type[codeType]
+        this.selectedCode.module = errorCode.module[codeType]
         return this
       }
     }
@@ -79,15 +82,44 @@ class ERR {
   }
 
   code(detailCode: number = this.selectedCode.code) {
-    const fullCode = this.selectedCode.type * 1000 + this.selectedCode.module * 100 + detailCode
+    const fullCode = this.selectedCode.type * 10000 + this.selectedCode.module * 100 + detailCode
     const message = this.errMessage
     const internal = this.isInternal
 
+    if (errorMessage[fullCode] && errorMessage[fullCode] !== message) {
+      console.log(`\x1b[42m\x1b[30m ErrorCode duplicate \x1b[0m: This ErrorCode \x1b[32m${fullCode}\x1b[0m has been used by \`${errorMessage[fullCode]}\`, message now is \`${message}\``)
+    }
+    errorMessage[fullCode] = message
+
     this.reset()
     return errDecorator(fullCode, message, internal)
+  }
+
+  errCode(detailCode) {
+    const fullCode = this.selectedCode.type * 10000 + this.selectedCode.module * 100 + detailCode
+    this.reset()
+    return fullCode
   }
 }
 
 const err = new ERR()
 
 export default err
+
+interface ERRType {
+  [prop: string]: () => ERR
+  param: () => ERR
+  net: () => ERR
+  db: () => ERR
+  controller: () => ERR
+  service: () => ERR
+}
+
+interface ERRModule {
+  [prop: string]: () => ERR
+  user: () => ERR
+  verification: () => ERR
+  jwt: () => ERR
+  sms: () => ERR
+  mail: () => ERR
+}

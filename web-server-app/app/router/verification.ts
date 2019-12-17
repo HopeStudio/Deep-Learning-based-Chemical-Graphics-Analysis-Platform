@@ -6,7 +6,7 @@ export default (app: Application) => {
   router.post(
     '/verification',
     middleware.errorHandler(),
-    middleware.checkParam('authType', 'authId'),
+    // middleware.checkParam('authType', 'authId'),
     controller.verification.mainValidator)
 
   router.post(

@@ -3,6 +3,8 @@ const errorCode = {
     param: 11,
     net: 12,
     db: 13,
+    controller: 14,
+    service: 15,
   },
   module: {
     user: 11,
