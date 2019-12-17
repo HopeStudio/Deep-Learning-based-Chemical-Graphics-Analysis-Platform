@@ -3,7 +3,10 @@ export default class Validator {
   // if return false, validate fail
   rule = {
     string(value) {
-      return value
+      if (value === '' || value === undefined) {
+        return false
+      }
+      return true
     },
   }
 
@@ -90,8 +93,8 @@ export default class Validator {
     }
 
     // other types
-    if (param.value && param.type) {
-      return this.check(param.value, param.type)
+    if (param.value) {
+      return this.check(param.value, param.type || 'string')
     }
   }
 
