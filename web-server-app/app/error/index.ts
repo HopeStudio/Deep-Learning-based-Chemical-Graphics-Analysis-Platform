@@ -1,7 +1,7 @@
 export default class CError extends Error {
   code: number
   error: CError | Error | undefined
-  usePreMessage: boolean
+  usePreMessage: boolean = true
 
   static Code(
     controllerCode: number = ERRCode.controller.default,
@@ -84,7 +84,7 @@ export function err(
   controllerCode: number,
   serviceCode: number,
   code: number = 0,
-  usePreMessage: boolean = false) {
+  usePreMessage: boolean = true) {
   return function (_target, _name, descriptor) {
     const oldFunc = descriptor.value
 

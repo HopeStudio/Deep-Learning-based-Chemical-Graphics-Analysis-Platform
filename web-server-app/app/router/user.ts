@@ -6,7 +6,6 @@ export default (app: Application) => {
   router.post(
     '/user/check/username',
     middleware.errorHandler(),
-    middleware.checkParam('uname'),
     controller.user.checkUserName)
 
   router.post(
@@ -24,7 +23,7 @@ export default (app: Application) => {
   router.post(
     '/user/login',
     middleware.errorHandler(),
-    middleware.checkParam(['authId', 'uname'], 'password'),
+    middleware.checkParam([ 'authId', 'uname' ], 'password'),
     controller.user.login)
 
   router.post(

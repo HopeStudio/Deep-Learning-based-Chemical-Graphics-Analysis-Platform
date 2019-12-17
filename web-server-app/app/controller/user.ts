@@ -1,11 +1,13 @@
 import { Controller } from 'egg'
 import CError, { err, ERRCode } from '../error'
+import param from '../decorator/param'
 
 export default class UserController extends Controller {
   @err(
     ERRCode.controller.user,
     ERRCode.service.default,
     11)
+  @param('uname')
   async checkUserName() {
     const { uname } = this.ctx.request.body
 
@@ -168,6 +170,10 @@ export default class UserController extends Controller {
       authType,
     })
     this.ctx.send()
+  }
+
+  async resetPassword() {
+    // reset
   }
 }
 

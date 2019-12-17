@@ -77,7 +77,7 @@ export default class UserService extends Service {
 
       const queryResult = await coon.select<UserSchema[]>('user', {
         where: { name },
-        columns: ['id', 'name', 'group_id'],
+        columns: [ 'id', 'name', 'group_id' ],
       })
 
       if (queryResult === null || queryResult.length === 0) {
@@ -88,7 +88,7 @@ export default class UserService extends Service {
             15))
       }
 
-      const [user] = queryResult as UserSchema[]
+      const [ user ] = queryResult as UserSchema[]
 
       const { id: user_id } = user
 
@@ -179,12 +179,12 @@ export default class UserService extends Service {
     22,
     true)
   async loginByOAuth({ authId, rawPassword }): Promise<LoginUser> {
-    const [user] = await this.app.mysql.query<UserSchema>(`
+    const [ user ] = await this.app.mysql.query<UserSchema>(`
       SELECT user.name name, user.password password, user.group_id group_id, user.salt salt
       FROM user
       INNER JOIN user_oauth oauth
       ON user.id = oauth.user_id
-      WHERE oauth.open_id= ?`, [authId])
+      WHERE oauth.open_id= ?`, [ authId ])
 
     if (!user) {
       throw new CError(
