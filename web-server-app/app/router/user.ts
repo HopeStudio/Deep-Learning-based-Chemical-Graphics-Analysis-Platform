@@ -24,7 +24,7 @@ export default (app: Application) => {
   router.post(
     '/user/login',
     middleware.errorHandler(),
-    middleware.checkParam([ 'authId', 'uname' ], 'password'),
+    middleware.checkParam(['authId', 'uname'], 'password'),
     controller.user.login)
 
   router.post(
@@ -33,4 +33,9 @@ export default (app: Application) => {
     middleware.errorHandler(),
     middleware.checkParam('uname'),
     controller.user.refleshAccessToken)
+
+  router.post(
+    '/user/create',
+    middleware.errorHandler(),
+    controller.user.createUser)
 }

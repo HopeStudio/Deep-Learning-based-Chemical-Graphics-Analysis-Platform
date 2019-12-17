@@ -1,4 +1,5 @@
 import { Service } from 'egg'
+import * as crypto from 'crypto'
 import CError, { err, ERRCode } from '../error'
 
 export default class UserService extends Service {
@@ -57,10 +58,13 @@ export default class UserService extends Service {
   async register(registerUser: RegisterUser) {
     const { uname: name, password, authType, authId } = registerUser
     const result = await this.app.mysql.beginTransactionScope(async coon => {
+      const salt = await this.generateSalt()
+      const hashPassword = await this.handlePassword(password, salt)
       const result = await coon.insert<UserSchemaForRegister>('user', {
         name,
-        password,
+        password: hashPassword,
         avatar: 'default',
+        salt,
       })
 
       if (result.affectedRows !== 1) {
@@ -73,7 +77,7 @@ export default class UserService extends Service {
 
       const queryResult = await coon.select<UserSchema[]>('user', {
         where: { name },
-        columns: [ 'id', 'name', 'group_id' ],
+        columns: ['id', 'name', 'group_id'],
       })
 
       if (queryResult === null || queryResult.length === 0) {
@@ -84,7 +88,7 @@ export default class UserService extends Service {
             15))
       }
 
-      const [ user ] = queryResult as UserSchema[]
+      const [user] = queryResult as UserSchema[]
 
       const { id: user_id } = user
 
@@ -144,8 +148,6 @@ export default class UserService extends Service {
   async loginByName({ name, rawPassword }): Promise<LoginUser> {
     const user = await this.getUser({ name })
 
-    const processPassword = await this.handlePassword(rawPassword)
-
     if (!user) {
       throw new CError(
         CError.Code(
@@ -154,7 +156,8 @@ export default class UserService extends Service {
           17))
     }
 
-    const { password } = user
+    const { password, salt } = user
+    const processPassword = await this.handlePassword(rawPassword, salt)
 
     if (password === processPassword) {
       return {
@@ -176,12 +179,12 @@ export default class UserService extends Service {
     22,
     true)
   async loginByOAuth({ authId, rawPassword }): Promise<LoginUser> {
-    const [ user ] = await this.app.mysql.query<UserSchema>(`
-      SELECT user.name name, user.password password, user.group_id group_id
+    const [user] = await this.app.mysql.query<UserSchema>(`
+      SELECT user.name name, user.password password, user.group_id group_id, user.salt salt
       FROM user
       INNER JOIN user_oauth oauth
       ON user.id = oauth.user_id
-      WHERE oauth.open_id= ?`, [ authId ])
+      WHERE oauth.open_id= ?`, [authId])
 
     if (!user) {
       throw new CError(
@@ -191,8 +194,8 @@ export default class UserService extends Service {
           19))
     }
 
-    const processPassword = await this.handlePassword(rawPassword)
-    const { password } = user
+    const { password, salt } = user
+    const processPassword = await this.handlePassword(rawPassword, salt)
     if (password === processPassword) {
       return {
         name: user.name,
@@ -211,9 +214,16 @@ export default class UserService extends Service {
     ERRCode.controller.default,
     ERRCode.service.user,
     23)
-  private handlePassword(rawPassword: string): string {
-    return rawPassword
+  private handlePassword(rawPassword: string, salt: string): string {
+    const hmac = crypto.createHmac('sha512', salt)
+    const processPassword = hmac.update(rawPassword).digest('hex')
+    return processPassword
   }
+
+  private generateSalt(length = 20) {
+    return crypto.randomBytes(Math.floor(length / 2)).toString('hex')
+  }
+
 }
 
 enum Gender {
@@ -226,6 +236,7 @@ interface UserSchemaForRegister {
   name: string
   password: string
   avatar: string
+  salt: string
 }
 
 interface UserSchema extends UserSchemaForRegister {

@@ -158,6 +158,17 @@ export default class UserController extends Controller {
       ERRCode.service.default,
       20))
   }
+
+  async createUser() {
+    const { uname, password, authId, authType } = this.ctx.request.body
+    await this.service.user.register({
+      uname,
+      password,
+      authId,
+      authType,
+    })
+    this.ctx.send()
+  }
 }
 
 interface RegisterUser {
