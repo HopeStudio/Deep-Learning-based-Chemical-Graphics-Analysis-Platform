@@ -1,4 +1,4 @@
-import errorCode from '../error/errorCode'
+import errorCode, { Type, Module } from '../error/errorCode'
 import CError from '../error'
 import errorMessage from '../error/errorMessage'
 import { createDecorator } from '../utils'
@@ -114,21 +114,10 @@ const err = new ERR()
 
 export default err
 
-interface ERRType {
+interface ERRType extends Record<keyof Type, () => ERR> {
   [prop: string]: () => ERR
-  param: () => ERR
-  net: () => ERR
-  db: () => ERR
-  controller: () => ERR
-  service: () => ERR
-  auth: () => ERR
 }
 
-interface ERRModule {
+interface ERRModule extends Record<keyof Module, () => ERR> {
   [prop: string]: () => ERR
-  user: () => ERR
-  verification: () => ERR
-  jwt: () => ERR
-  sms: () => ERR
-  mail: () => ERR
 }

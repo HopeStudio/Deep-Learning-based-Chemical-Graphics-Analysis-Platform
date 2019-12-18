@@ -17,3 +17,20 @@ const errorCode = {
 }
 
 export default errorCode
+
+export interface Type {
+  param
+  net
+  db
+  controller
+  service
+  auth
+}
+
+export interface Module {
+  user
+  verification
+  jwt
+  sms
+  mail
+}

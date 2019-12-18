@@ -1,6 +1,7 @@
 import { Controller } from 'egg'
 import { param, err, auth } from '../decorator'
 import CError from '../error'
+import { User, AuthTypes, OAuth } from '../type/user'
 
 err.type.controller().module.user().save()
 
@@ -34,14 +35,19 @@ export default class UserController extends Controller {
   }
 
   @err.message('error to register').code(13)
-  @param('uname', 'password', 'authType', 'authToken', 'authId')
+  @param('uname', 'password', 'authType', 'authToken', 'openId')
   async register() {
-    const { uname, password, authType, authToken, authId } = this.ctx.request.body as RegisterUser
+    const { uname, password, authType, authToken, openId } = this.ctx.request.body as RegisterUser
 
     const tokenInfo = await this.service.jwt.verify<TokenInfo>(authToken)
 
-    if (tokenInfo && tokenInfo.authType === authType && tokenInfo.authId === authId) {
-      const user = await this.service.user.register({ uname, password, authType, authId })
+    if (tokenInfo && tokenInfo.authType === authType && tokenInfo.openId === openId) {
+      const user = await this.service.user.register({
+        name: uname,
+        password,
+        openId,
+        authType,
+      })
 
       const accessToken = await this.setToken({
         uname: user.name,
@@ -75,15 +81,15 @@ export default class UserController extends Controller {
   }
 
   @err.message('fail to login').code(16)
-  @param([ 'authId', 'uname' ], 'password')
+  @param([ 'openId', 'uname' ], 'password')
   async login() {
-    const { uname, authId, password: rawPassword } = this.ctx.request.body
+    const { uname, openId, password: rawPassword } = this.ctx.request.body
 
     let user
     if (uname) {
-      user = await this.service.user.loginByName({ name: uname, rawPassword })
-    } else if (authId) {
-      user = await this.service.user.loginByOAuth({ authId, rawPassword })
+      user = await this.service.user.loginByName(uname, rawPassword)
+    } else if (openId) {
+      user = await this.service.user.loginByOAuth(openId, rawPassword)
     }
 
     if (!user) {
@@ -106,14 +112,14 @@ export default class UserController extends Controller {
   }
 
   private async generateRefleshToken(user: LoginTokenData): Promise<string> {
-    const payload: RefleshTokenData = { ...user, tokenType: 'reflesh' }
+    const payload: RefleshTokenData = { ...user, tokenType: TokenType.reflesh }
     const token = await this.service.jwt.sign(payload, this.app.config.refleshToken.expire)
 
     return token
   }
 
   private async generateAccessToken(user: LoginTokenData): Promise<string> {
-    const payload: AccessTokenData = { ...user, tokenType: 'access' }
+    const payload: AccessTokenData = { ...user, tokenType: TokenType.access }
     const token = await this.service.jwt.sign(payload, this.app.config.accessToken.expire)
 
     return token
@@ -150,53 +156,53 @@ export default class UserController extends Controller {
   }
 
   async createUser() {
-    const { uname, password, authId, authType } = this.ctx.request.body
+    const { uname, password, openId, authType } = this.ctx.request.body
     await this.service.user.register({
-      uname,
+      name: uname,
       password,
-      authId,
+      openId,
       authType,
     })
     this.ctx.send()
   }
 
   @auth()
+  @param([ 'uname', 'authId' ], 'password', 'newPassword')
   async resetPassword() {
-    this.ctx.send(1222, this.ctx.auth)
-    // reset
+    // const { uname, authId, password } = this.ctx.request.body
   }
 }
 
 err.restore()
 
 interface RegisterUser {
-  uname: string
-  password: string
+  uname: User['name']
+  password: User['password']
   authType: AuthTypes.email | AuthTypes.phone
   authToken: string
-  authId: string
-}
-
-enum AuthTypes {
-  email = 'email',
-  phone = 'phone',
+  openId: OAuth['openId']
 }
 
 interface TokenInfo {
-  authType: string
-  authId: string
+  authType: OAuth['authType']
+  openId: OAuth['openId']
 }
 
 interface LoginTokenData {
-  uname: string
-  groupId: number
+  uname: User['name']
+  groupId: User['groupId']
   [prop: string]: any
 }
 
+enum TokenType {
+  access = 'access',
+  reflesh = 'reflesh',
+}
+
 interface RefleshTokenData extends LoginTokenData {
-  tokenType: 'reflesh'
+  tokenType: TokenType.reflesh
 }
 
 interface AccessTokenData extends LoginTokenData {
-  tokenType: 'access'
+  tokenType: TokenType.access
 }

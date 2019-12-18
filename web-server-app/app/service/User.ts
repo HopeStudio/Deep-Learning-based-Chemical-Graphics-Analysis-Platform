@@ -2,8 +2,9 @@ import { Service } from 'egg'
 import * as crypto from 'crypto'
 import CError from '../error'
 import { err } from '../decorator'
+import { SelectOAuth, SelectOAuthSchema, SelectUser, SelectUserSchema, OAuthSchema, User, UserSchema, OAuth } from '../type/user'
 
-err.type.service().module.user().internal().save()
+err.type.service().module.user().save()
 
 export default class UserService extends Service {
   /**
@@ -14,7 +15,7 @@ export default class UserService extends Service {
    * @memberof UserService
    */
   @err.internal().message('check user error', 'get user error').code(11)
-  async checkUserName(userName: string): Promise<boolean> {
+  async checkUserName(userName: User['name']): Promise<boolean> {
     const user = await this.getUser({
       name: userName,
     })
@@ -34,10 +35,10 @@ export default class UserService extends Service {
    * @memberof UserService
    */
   @err.internal().message('check email error', 'get oauth error').code(12)
-  async checkEmail(email: string): Promise<boolean> {
+  async checkEmail(email: OAuth['openId']): Promise<boolean> {
     const user = await this.getByOAuth({
-      auth_type: 'email',
-      open_id: email,
+      authType: 'email',
+      openId: email,
     })
 
     if (user) {
@@ -47,19 +48,22 @@ export default class UserService extends Service {
     return true
   }
 
+  // register
   @err.internal().message('register fail', 'transcation error').code(13)
-  async register(registerUser: RegisterUser) {
-    const { uname: name, password, authType, authId } = registerUser
+  async register(registerUser: RegisterUserParam) {
+    const { name, password, authType, openId } = registerUser
     const result = await this.app.mysql.beginTransactionScope(async coon => {
       const salt = await this.generateSalt()
       const hashPassword = await this.handlePassword(password, salt)
-      const result = await coon.insert<UserSchemaForRegister>('user', {
+
+      // insert into db
+      const result = await coon.insert<SelectUserSchema<'name' | 'password' | 'salt'>>('user', {
         name,
         password: hashPassword,
-        avatar: 'default',
         salt,
       })
 
+      // insert fail
       if (result.affectedRows !== 1) {
         throw new CError(
           'create user fail',
@@ -69,10 +73,11 @@ export default class UserService extends Service {
           'can not insert user')
       }
 
-      const queryResult = await coon.select<UserSchema[]>('user', {
-        where: { name },
-        columns: [ 'id', 'name', 'group_id' ],
-      })
+      const queryResult =
+        await coon.select<Array<SelectUserSchema<'id' | 'name' | 'group_id'>>>('user', {
+          where: { name },
+          columns: [ 'id', 'name', 'group_id' ],
+        })
 
       if (queryResult === null || queryResult.length === 0) {
         throw new CError(
@@ -81,14 +86,14 @@ export default class UserService extends Service {
           true)
       }
 
-      const [ user ] = queryResult as UserSchema[]
+      const [ user ] = queryResult
 
       const { id: user_id } = user
 
-      const userAuthResult = await coon.insert<OAuthSchemaRegister>('user_oauth', {
+      const userAuthResult = await coon.insert<SelectOAuthSchema<'user_id' | 'auth_type' | 'open_id'>>('user_oauth', {
         user_id,
         auth_type: authType,
-        open_id: authId,
+        open_id: openId,
       })
 
       if (userAuthResult.affectedRows !== 1) {
@@ -114,7 +119,7 @@ export default class UserService extends Service {
    * @returns
    * @memberof UserService
    */
-  private async getUser(userQuery: GetUserQuery) {
+  private async getUser(userQuery: Partial<SelectUser<'name' | 'id'>>) {
     const user = await this.app.mysql.get<UserSchema>('user', userQuery)
     return user
   }
@@ -127,26 +132,30 @@ export default class UserService extends Service {
    * @returns
    * @memberof UserService
    */
-  private async getByOAuth(oauth: OAuthQuery) {
-    const user = await this.app.mysql.get<OAuthSchema>('user_oauth', oauth)
-    return user
+  private async getByOAuth(oauthQuery: Partial<SelectOAuth<'authType' | 'openId'>>) {
+    const oauth = await this.app.mysql.get<OAuthSchema>('user_oauth', {
+      auth_type: oauthQuery.authType,
+      open_id: oauthQuery.openId,
+    })
+    return oauth
   }
 
   @err.internal().message('login error').code(21)
-  async loginByName({ name, rawPassword }): Promise<LoginUser> {
+  async loginByName(name: User['name'], rawPassword: User['password']) {
     const user = await this.getUser({ name })
 
     if (!user) {
       throw new CError(
-        'user is not exist',
+        'uname or password incorrect',
         err.type.service().module.user().errCode(17),
-        true)
+        false,
+        undefined,
+        'user is not exist')
     }
 
     const { password, salt } = user
-    const processPassword = await this.handlePassword(rawPassword, salt)
 
-    if (password === processPassword) {
+    if (this.checkPassword(rawPassword, password, salt)) {
       return {
         name: user.name,
         groupId: user.group_id,
@@ -154,19 +163,21 @@ export default class UserService extends Service {
     }
 
     throw new CError(
-      'password is incorrect',
+      'uname or password incorrect',
       err.type.service().module.user().errCode(18),
-      false)
+      false,
+      undefined,
+      'password is incorrect')
   }
 
   @err.internal().message('login error in oauth').code(22)
-  async loginByOAuth({ authId, rawPassword }): Promise<LoginUser> {
-    const [ user ] = await this.app.mysql.query<UserSchema>(`
+  async loginByOAuth(openId: OAuth['openId'], rawPassword: User['password']) {
+    const [ user ] = await this.app.mysql.query<SelectUserSchema<'name' | 'password' | 'group_id' | 'salt'>>(`
       SELECT user.name name, user.password password, user.group_id group_id, user.salt salt
       FROM user
       INNER JOIN user_oauth oauth
       ON user.id = oauth.user_id
-      WHERE oauth.open_id= ?`, [ authId ])
+      WHERE oauth.open_id= ?`, [ openId ])
 
     if (!user) {
       throw new CError(
@@ -176,8 +187,7 @@ export default class UserService extends Service {
     }
 
     const { password, salt } = user
-    const processPassword = await this.handlePassword(rawPassword, salt)
-    if (password === processPassword) {
+    if (this.checkPassword(rawPassword, password, salt)) {
       return {
         name: user.name,
         groupId: user.group_id,
@@ -191,7 +201,7 @@ export default class UserService extends Service {
   }
 
   @err.internal().message('handle password error').code(23)
-  private handlePassword(rawPassword: string, salt: string): string {
+  private handlePassword(rawPassword: User['password'], salt: User['salt']) {
     const hmac = crypto.createHmac('sha512', salt)
     const processPassword = hmac.update(rawPassword).digest('hex')
     return processPassword
@@ -201,59 +211,13 @@ export default class UserService extends Service {
     return crypto.randomBytes(Math.floor(length / 2)).toString('hex')
   }
 
+  async checkPassword(rawPassword: User['password'], password: User['password'], salt: User['salt']) {
+    const processPassword = await this.handlePassword(rawPassword, salt)
+    return password === processPassword
+  }
+
 }
 
 err.restore()
 
-enum Gender {
-  male = 'M',
-  female = 'F',
-  private = 'P',
-}
-
-interface UserSchemaForRegister {
-  name: string
-  password: string
-  avatar: string
-  salt: string
-}
-
-interface UserSchema extends UserSchemaForRegister {
-  id: number
-  gender: Gender.male | Gender.female | Gender.private
-  group_id: number
-}
-
-interface GetUserQuery {
-  name?: string
-  id?: number
-}
-
-interface OAuthQuery {
-  auth_type: string
-  open_id: string
-}
-
-interface OAuthSchemaRegister {
-  user_id: number
-  auth_type: string
-  open_id: string
-  access_token?: string
-}
-
-interface OAuthSchema extends OAuthSchemaRegister {
-  id: number
-  access_token: string
-}
-
-interface RegisterUser {
-  uname: string
-  password: string
-  authType: string
-  authId: string
-}
-
-interface LoginUser {
-  name,
-  groupId
-}
+interface RegisterUserParam extends SelectUser<'name' | 'password'>, SelectOAuth<'authType' | 'openId'> { }

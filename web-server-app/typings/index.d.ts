@@ -24,7 +24,7 @@ interface mysqlFuns {
   get<T>(table: string, query: object): Promise<T | null>
   select<T>(table: string, config: mysqlSelectConfig): Promise<T | null>
   beginTransaction(): mysqlTransaction
-  beginTransactionScope(func:((coon: mysqlTransaction)=>Promise<any>), ctx)
+  beginTransactionScope<T>(func:((coon: mysqlTransaction)=>Promise<T>), ctx): T
   query<T>(sqlQuery: string, variable: string[]): Promise<T[]>
 }
 
@@ -46,6 +46,7 @@ declare module 'egg' {
 
   interface Context {
     send(code?: number, data?: object | string): ResponseData
+    auth?: {[a: string]: any}
   }
 
   interface 
