@@ -19,11 +19,12 @@ function exist(value) {
  * param('uname', ['accessToken', { reflesh: 'cookie' }]) // check if uname in ctx.body and (accessToken in ctx.body or reflesh in cookie)
  * param(['accessToken', {AND: ['authId', 'authToken']}])// check if accessToken in ctx.body or (both authId and authToken) in ctx.body
  *
+ * @see validator.ts
  * @export
  * @param {(...Array<string | string[]>)} options
  * @returns
  */
-export default function param(...options: Array<string | string[]>) {
+export default function param(...options: Array<string | string[] | Rules | Rules2>) {
   return function (_target, _name, descriptor) {
     const prevFunc = descriptor.value
     const validator = new Validator()
@@ -52,4 +53,14 @@ export default function param(...options: Array<string | string[]>) {
 
     return descriptor
   }
+}
+
+type rules = 'default' | 'cookie'
+
+interface Rules {
+  [props: string]: rules
+}
+
+interface Rules2 {
+  'AND': Array<string | string[] | Rules | Rules2>
 }
