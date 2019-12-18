@@ -5,7 +5,8 @@ import errorMessage from '../error/errorMessage'
 function errDecorator(
   errCode: number,
   message: string | undefined,
-  internal: boolean | undefined) {
+  internal: boolean | undefined,
+  innerMessage: string | undefined) {
   return function (_target, _value, descriptor) {
     const prevFunc = descriptor.value
 
@@ -14,7 +15,7 @@ function errDecorator(
       try {
         result = await prevFunc.apply(this, arg)
       } catch (error) {
-        throw new CError(message, errCode, internal, error)
+        throw new CError(message, errCode, internal, error, innerMessage)
       }
       return result
     }
@@ -109,7 +110,7 @@ class ERR {
     errorMessage[fullCode] = message
 
     this.reset()
-    return errDecorator(fullCode, message, internal)
+    return errDecorator(fullCode, message, internal, this.innerMessage)
   }
 
   errCode(detailCode) {

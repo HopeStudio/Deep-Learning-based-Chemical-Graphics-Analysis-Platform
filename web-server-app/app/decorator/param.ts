@@ -1,4 +1,5 @@
-import CError, { ERRCode } from '../error'
+import CError from '../error'
+import { err } from '../decorator'
 import { Validator } from '../utils'
 
 function exist(value) {
@@ -43,11 +44,10 @@ export default function param(...options: Array<string | string[]>) {
 
       const message = `lack of param: ${lackOfParam.join(',')}`
 
-      throw new CError(CError.Code(
-        ERRCode.controller.default,
-        ERRCode.service.default,
-        11),
-        message)
+      throw new CError(
+        message,
+        err.type.param().errCode(11),
+        false)
     }
 
     return descriptor
