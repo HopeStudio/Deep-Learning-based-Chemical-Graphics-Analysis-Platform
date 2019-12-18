@@ -52,18 +52,32 @@ export default class Validator {
       }
       return true
     },
+    regexp(_type: RegExp) {
+      return true
+    },
   }
 
   setDefaultRule(func) {
     this.addRule('default', func)
   }
 
-  private check(type: string | string[], param: string) {
-    let result
+  setRegExpRule(func: ((type: RegExp | string) => boolean)) {
+    this.addRule('regexp', func)
+  }
+
+  private check(type: string | string[] | RegExp, param: string) {
+    if (type instanceof RegExp) {
+      const result = this.rule.regexp && this.rule.regexp(type)
+      if (result) {
+        return ''
+      }
+      return `${param}{${type.source}}`
+    }
+
     if (Array.isArray(type)) {
       for (const i in type) {
         const rule = type[i]
-        if (this.rule[rule] && this.rule[rule](param)) {
+        if (this.rule[rule] && this.rule[rule](param, rule)) {
           continue
         }
         if (rule !== 'default') {
@@ -74,7 +88,7 @@ export default class Validator {
       return ''
     }
 
-    result = this.rule[type] && this.rule[type](param)
+    const result = this.rule[type] && this.rule[type](param, type)
     if (result) {
       // true, validate successfully
       return ''
@@ -103,7 +117,7 @@ export default class Validator {
     throw new Error('unsupport type')
   }
 
-  addRule(type: string, check: (value: any) => boolean) {
+  addRule(type: string, check: (value: string | RegExp) => boolean) {
     this.rule[type] = check
   }
 

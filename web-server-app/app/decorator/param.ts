@@ -1,3 +1,4 @@
+import { Context } from 'egg'
 import CError from '../error'
 import { err } from '../decorator'
 import { Validator } from '../utils'
@@ -30,8 +31,12 @@ export default function param(...options: Array<string | string[] | Rules | Rule
     const validator = new Validator()
 
     descriptor.value = async function (...args) {
+      const ctx = this.ctx as Context
       // check if param is exist in ctx.body
-      validator.setDefaultRule(param => exist(this.ctx.request.body[param]))
+      validator.setDefaultRule(param => exist(ctx.request.body[param]))
+      // string
+      validator.addRule('string', param => typeof ctx.request.body[param] === 'string')
+      validator.addRule('number', param => typeof ctx.request.body[param] === 'number')
 
       // check if param is exist in cookie
       validator.addRule('cookie', param => exist(this.ctx.cookies.get(param)))
@@ -55,7 +60,7 @@ export default function param(...options: Array<string | string[] | Rules | Rule
   }
 }
 
-type rules = 'default' | 'cookie'
+type rules = 'default' | 'cookie' | 'string' | 'number'
 
 interface Rules {
   [props: string]: rules
