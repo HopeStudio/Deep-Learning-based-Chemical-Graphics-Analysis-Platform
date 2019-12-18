@@ -16,7 +16,7 @@ function exist(value) {
  * @example
  * param('uname', 'password') // check if uname and password is exist in ctx.body
  * param('uname', ['password', 'authId']) // check if uname and (password or authId) is exist in ctx.body
- * param('uname', ['accessToken', {value: 'reflesh', type: 'cookie'}]) // check if uname in ctx.body and (accessToken in ctx.body or reflesh in cookie)
+ * param('uname', ['accessToken', { reflesh: 'cookie' }]) // check if uname in ctx.body and (accessToken in ctx.body or reflesh in cookie)
  * param(['accessToken', {AND: ['authId', 'authToken']}])// check if accessToken in ctx.body or (both authId and authToken) in ctx.body
  *
  * @export
@@ -30,7 +30,7 @@ export default function param(...options: Array<string | string[]>) {
 
     descriptor.value = async function (...args) {
       // check if param is exist in ctx.body
-      validator.addRule('string', param => exist(this.ctx.request.body[param]))
+      validator.setDefaultRule(param => exist(this.ctx.request.body[param]))
 
       // check if param is exist in cookie
       validator.addRule('cookie', param => exist(this.ctx.cookies.get(param)))
@@ -42,7 +42,7 @@ export default function param(...options: Array<string | string[]>) {
         return result
       }
 
-      const message = `lack of param: ${lackOfParam.join(',')}`
+      const message = `error of param: ${lackOfParam.join(',')}`
 
       throw new CError(
         message,

@@ -5,7 +5,16 @@
  * AND: argument list or object like: {AND: []}
  *
  * support custom rule:
- * { value: param, type: 'ruleName' }
+ * { [param]: 'rule' }
+ * if there are more than one param, then work like an AND Array
+ *
+ * e.g. { uname: 'string', groupId: 'number' }
+ * you can use both AND and custom rule:
+ * { uname: 'string', AND: ['a', 'b', 'openId'] }
+ * // AND Array will use default rule, and the result will be merged
+ *
+ * custom rule result format will be like: `groupId{number} AND uname{string}`
+ * which will following by its type, and default type will be ignore.
  *
  * @return an array of param that validate fail:
  * validate(['a', 'b', 'c']) => ['b OR c'] (if a pass, b and c fail)
@@ -18,7 +27,7 @@
  *
  * validator.setDefaultRule(param => data[param] > 0)
  * // or
- * validator.addRule('string', param => data[param] > 0)
+ * validator.addRule('default', param => data[param] > 0)
  *
  * validator.validate('a', 'b') // return []
  * validator.validate('a', 'c') // return ['c']
@@ -27,7 +36,8 @@
  * validator.validate(['c', 'd']) // return ['c OR d']
  *
  * validator.addRule('reverse', param => data[param] < 0)
- * validator.validate({value: c, type: 'reverse'}) // return []
+ * validator.validate({c: reverse, d: reverse}) // return []
+ * validator.validate({a: reverse, b: reverse}) //return ['(a AND b)']
  *
  * @export
  * @class Validator
@@ -36,7 +46,7 @@ export default class Validator {
   // if return true, validate successfully
   // if return false, validate fail
   rule = {
-    string(value) {
+    default(value) {
       if (value === '' || value === undefined) {
         return false
       }
@@ -45,14 +55,33 @@ export default class Validator {
   }
 
   setDefaultRule(func) {
-    this.addRule('string', func)
+    this.addRule('default', func)
   }
 
-  private check(type: string, param: string) {
-    const result = this.rule[type] && this.rule[type](param)
+  private check(type: string | string[], param: string) {
+    let result
+    if (Array.isArray(type)) {
+      for (const i in type) {
+        const rule = type[i]
+        if (this.rule[rule] && this.rule[rule](param)) {
+          continue
+        }
+        if (rule !== 'default') {
+          return `${param}{${rule}}`
+        }
+        return param
+      }
+      return ''
+    }
+
+    result = this.rule[type] && this.rule[type](param)
     if (result) {
       // true, validate successfully
       return ''
+    }
+
+    if (type !== 'default') {
+      return `${param}{${type}}`
     }
 
     return param
@@ -83,7 +112,7 @@ export default class Validator {
   }
 
   private validateString(param: string) {
-    return this.check('string', param)
+    return this.check('default', param)
   }
 
   // return like: ['a', 'b', 'c'] => (a OR b OR c)
@@ -103,37 +132,51 @@ export default class Validator {
     return ''
   }
 
-  private validateAndArray(param: any[]) {
+  private validateAndArray(param: any[]): string {
     const result = this.validateParams(...param)
 
-    if (result.some(res => res)) {
-      // if true, and array rule fail
-      const messageArray = result.filter(res => res)
-      const message = messageArray.join(' AND ')
-      if (messageArray.length > 1) {
-        return `(${message})`
-      }
-      return message
+    const messageArray = result.filter(res => res)
+    const message = messageArray.join(' AND ')
+    if (messageArray.length > 1) {
+      return `(${message})`
     }
-
-    return ''
+    // if message Array length is 0, then pass the validate process
+    return message
   }
 
-  private validateObject(param: AndObjectArg | ValidateObjectArg)
-
-  private validateObject(param) {
+  private validateObject(param: AndObjectArg | AndObjectArg2) {
+    const result: string[] = []
     if (param.AND) {
       if (!Array.isArray(param.AND)) {
         throw new Error('param.AND should be Array')
       }
 
-      return this.validateAndArray(param.AND)
+      result.push(this.validateAndArray(param.AND))
     }
 
     // other types
-    if (param.value) {
-      return this.check(param.value, param.type || 'string')
+    const paramArr: ValidateObjectArg[] = []
+    for (const key in param) {
+      if (key === 'AND') {
+        continue
+      }
+      paramArr.push({
+        value: key,
+        type: param[key],
+      })
     }
+
+    if (paramArr.length > 0) {
+      const andParamArr = paramArr.map(({ value, type }) => this.check(type || 'default', value))
+      result.push(...andParamArr)
+    }
+
+    const messageArray = result.filter(res => res)
+    const message = messageArray.join(' AND ')
+    if (messageArray.length > 1) {
+      return `(${message})`
+    }
+    return message
   }
 
   validate(...param: any[]) {
@@ -143,9 +186,13 @@ export default class Validator {
 
 interface ValidateObjectArg {
   value: any
-  type: string
+  type: string | string[]
 }
 
 interface AndObjectArg {
   AND: any[]
+}
+
+interface AndObjectArg2 {
+  [prop: string]: string
 }
