@@ -1,26 +1,16 @@
 import errorCode from '../error/errorCode'
-import CError from '../error/cerror'
+import CError from '../error'
 import errorMessage from '../error/errorMessage'
+import { createDecorator } from '../utils'
 
-function errDecorator(
+const errDecorator = createDecorator(undefined, undefined, function (
+  error,
   errCode: number,
   message: string | undefined,
   internal: boolean | undefined,
   innerMessage: string | undefined) {
-  return function (_target, _value, descriptor) {
-    const prevFunc = descriptor.value
-
-    descriptor.value = async function (...arg) {
-      let result
-      try {
-        result = await prevFunc.apply(this, arg)
-      } catch (error) {
-        throw new CError(message, errCode, internal, error, innerMessage)
-      }
-      return result
-    }
-  }
-}
+  throw new CError(message, errCode, internal, error, innerMessage)
+})
 
 /**
  * to handle error, and throw a CError instead
@@ -93,10 +83,10 @@ class ERR {
         module: 10,
         code: 10,
       }
+      this.isInternal = false
     }
     this.selectedCode.code = 10
     this.errMessage = undefined
-    this.isInternal = false
   }
 
   code(detailCode: number = this.selectedCode.code) {
@@ -131,6 +121,7 @@ interface ERRType {
   db: () => ERR
   controller: () => ERR
   service: () => ERR
+  auth: () => ERR
 }
 
 interface ERRModule {

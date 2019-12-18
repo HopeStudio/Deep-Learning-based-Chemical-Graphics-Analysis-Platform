@@ -11,6 +11,7 @@
       true,
       "single"
     ],
-    "only-arrow-functions": false
+    "only-arrow-functions": false,
+    "ter-prefer-arrow-callback": false
   }
 }

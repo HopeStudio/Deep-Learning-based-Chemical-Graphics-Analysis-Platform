@@ -3,7 +3,7 @@ import * as crypto from 'crypto'
 import CError from '../error'
 import { err } from '../decorator'
 
-err.type.service().module.user().save()
+err.type.service().module.user().internal().save()
 
 export default class UserService extends Service {
   /**

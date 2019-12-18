@@ -20,7 +20,7 @@ export default class CError extends Error {
     this.error = error
     this.innerMessage = innerMessage
 
-    if (errorMessage[errorCode] && errorMessage[errorCode].message !== message) {
+    if (errorMessage[errorCode] && errorMessage[errorCode] !== message) {
       console.log(`\x1b[42m\x1b[30m ErrorCode duplicate \x1b[0m: This ErrorCode \x1b[32m${errorCode}\x1b[0m has been used by \`${errorMessage[errorCode]}\`, message now is \`${message}\``)
     }
     errorMessage[errorCode] = message

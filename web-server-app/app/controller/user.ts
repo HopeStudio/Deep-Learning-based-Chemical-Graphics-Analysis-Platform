@@ -1,5 +1,5 @@
 import { Controller } from 'egg'
-import { param, err } from '../decorator'
+import { param, err, auth } from '../decorator'
 import CError from '../error'
 
 err.type.controller().module.user().save()
@@ -160,7 +160,9 @@ export default class UserController extends Controller {
     this.ctx.send()
   }
 
+  @auth()
   async resetPassword() {
+    this.ctx.send(1222, this.ctx.auth)
     // reset
   }
 }

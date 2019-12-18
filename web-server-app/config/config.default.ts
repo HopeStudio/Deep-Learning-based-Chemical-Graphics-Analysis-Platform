@@ -44,8 +44,8 @@ export default (appInfo: EggAppInfo) => {
 
     // access token
     accessToken: {
-      // 1 h
-      expire: 60,
+      // 1 min
+      expire: 1,
     },
   }
 

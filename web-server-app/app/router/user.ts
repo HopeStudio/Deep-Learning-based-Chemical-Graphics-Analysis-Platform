@@ -27,4 +27,8 @@ export default (app: Application) => {
   router.post(
     '/user/create',
     controller.user.createUser)
+
+  router.post(
+    '/user/resetpassword',
+    controller.user.resetPassword)
 }
