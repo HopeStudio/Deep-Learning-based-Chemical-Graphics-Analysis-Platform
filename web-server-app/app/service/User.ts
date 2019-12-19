@@ -74,7 +74,7 @@ export default class UserService extends Service {
       }
 
       const queryResult =
-        await coon.select<Array<SelectUserSchema<'id' | 'name' | 'group_id'>>>('user', {
+        await coon.select<SelectUserSchema<'id' | 'name' | 'group_id'>>('user', {
           where: { name },
           columns: [ 'id', 'name', 'group_id' ],
         })
@@ -155,7 +155,9 @@ export default class UserService extends Service {
 
     const { password, salt } = user
 
-    if (this.checkPassword(rawPassword, password, salt)) {
+    const isPasswordCorrect = await this.checkPassword(rawPassword, password, salt)
+
+    if (isPasswordCorrect) {
       return {
         name: user.name,
         groupId: user.group_id,
@@ -216,6 +218,42 @@ export default class UserService extends Service {
     return password === processPassword
   }
 
+  async resetPassword(name: User['name'], rawPassword: User['password'], newPassword: User['password']) {
+    const queryResult = await this.app.mysql.select<SelectUserSchema<'password' | 'salt'>>('user', {
+      columns: [ 'password', 'salt' ],
+      where: { name },
+    })
+
+    if (!queryResult || queryResult.length === 0) {
+      throw new CError(
+        'user is not exist',
+        err.type.service().module.user().errCode(24))
+    }
+
+    const [ { password, salt } ] = queryResult
+    const isPasswordCorrect = await this.checkPassword(rawPassword, password, salt)
+
+    if (!isPasswordCorrect) {
+      throw new CError(
+        'password is incorrect',
+        err.type.service().module.user().errCode(25))
+    }
+
+    const processPassword = await this.handlePassword(newPassword, salt)
+    const result = await this.app.mysql.update('user', {
+      password: processPassword,
+    }, {
+      where: { name },
+    })
+
+    if (result.affectedRows !== 1) {
+      throw new CError(
+        'update password fail',
+        err.type.service().module.user().errCode(26))
+    }
+
+    await this.service.blacklist.setUserToken(name)
+  }
 }
 
 err.restore()

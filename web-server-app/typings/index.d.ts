@@ -23,10 +23,11 @@ interface mysqlSelectConfig {
 interface mysqlFuns {
   insert<T>(table: string, data: T): Promise<mysqlResult>
   get<T>(table: string, query: object): Promise<T | null>
-  select<T>(table: string, config: mysqlSelectConfig): Promise<T | null>
+  select<T>(table: string, config: mysqlSelectConfig): Promise<T[] | null>
   beginTransaction(): mysqlTransaction
   beginTransactionScope<T>(func:((coon: mysqlTransaction)=>Promise<T>), ctx): T
   query<T>(sqlQuery: string, variable: string[]): Promise<T[]>
+  update<T>(table: string, data: T, config: mysqlSelectConfig): Promise<mysqlResult>
 }
 
 interface mysqlTransaction extends mysqlFuns{
@@ -47,7 +48,7 @@ declare module 'egg' {
 
   interface Context {
     send(code?: number, data?: object | string): ResponseData
-    auth?: AccessToken
+    auth: AccessToken
   }
 
   interface 

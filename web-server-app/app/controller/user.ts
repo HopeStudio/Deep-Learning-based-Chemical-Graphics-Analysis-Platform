@@ -156,6 +156,7 @@ export default class UserController extends Controller {
       'reflesh token incorrect')
   }
 
+  @param('uname', 'password', 'openId', 'authType')
   async createUser() {
     const { uname, password, openId, authType } = this.ctx.request.body
     await this.service.user.register({
@@ -167,10 +168,14 @@ export default class UserController extends Controller {
     this.ctx.send()
   }
 
+  @err.message('update password fail').code(19)
   @auth()
-  @param([ 'uname', 'authId' ], 'password', 'newPassword')
+  @param('password', 'newPassword')
   async resetPassword() {
-    // const { uname, authId, password } = this.ctx.request.body
+    const { password, newPassword } = this.ctx.request.body
+    const { uname } = this.ctx.auth
+    await this.service.user.resetPassword(uname, password, newPassword)
+    this.ctx.send()
   }
 }
 
