@@ -4,6 +4,9 @@
  * OR: a simple array
  * AND: argument list or object like: {AND: []}
  *
+ * default rule:
+ * use validator.setDefaultRule() to set default rule
+ *
  * support custom rule:
  * { [param]: 'rule' }
  * if there are more than one param, then work like an AND Array
@@ -15,6 +18,10 @@
  *
  * custom rule result format will be like: `groupId{number} AND uname{string}`
  * which will following by its type, and default type will be ignore.
+ *
+ * support RegExp:
+ * { email: /\w+@\w+/g}
+ * ues validator.setRegExpRule() to set RegExp Rule
  *
  * @return an array of param that validate fail:
  * validate(['a', 'b', 'c']) => ['b OR c'] (if a pass, b and c fail)
@@ -117,7 +124,7 @@ export default class Validator {
     throw new Error('unsupport type')
   }
 
-  addRule(type: string, check: (value: string | RegExp) => boolean) {
+  addRule(type: string, check: (value: string) => boolean) {
     this.rule[type] = check
   }
 

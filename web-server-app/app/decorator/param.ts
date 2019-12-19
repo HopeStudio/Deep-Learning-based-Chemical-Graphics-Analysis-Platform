@@ -48,7 +48,7 @@ export default function param(...options: Array<string | string[] | Rules | Rule
         return result
       }
 
-      const message = `error of param: ${lackOfParam.join(',')}`
+      const message = `Invalid params: ${lackOfParam.join(',')}`
 
       throw new CError(
         message,
