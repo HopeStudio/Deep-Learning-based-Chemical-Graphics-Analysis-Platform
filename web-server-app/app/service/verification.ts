@@ -80,7 +80,7 @@ export default class VerificationService extends Service {
     const payload: ResetPasswordToken = { openId: email, uname: name }
     const expire = 15
     const token = await this.service.jwt.sign(payload, expire)
-    const link = `${this.app.config.root}user/resetpassword?token=${token}`
+    const link = `${this.app.config.webRoot}/user/resetpassword?token=${token}`
     const resetPasswordTemplate = `
       <p>您正在修改密码，请点击下面的链接进行修改：</p>
       <p><a href="${link}">${link}</a></p>

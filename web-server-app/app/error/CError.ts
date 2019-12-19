@@ -1,4 +1,13 @@
+import { Logger, FileTransport } from 'egg-logger'
+import * as path from 'path'
 import errorMessage from './errorMessage'
+
+const logger = new Logger({})
+
+logger.set('file', new FileTransport({
+  file: path.join(__dirname, './logs/error-custom.log'),
+  level: 'ERROR',
+}))
 
 export default class CError extends Error {
   code: number
@@ -25,8 +34,39 @@ export default class CError extends Error {
     }
     errorMessage[errorCode] = message
 
+    this.log()
+
     if (error instanceof CError && !error.internal) {
       return error
     }
+  }
+
+  log() {
+    if (this.error instanceof CError) {
+      logger.error(
+        this.time(),
+        this.code,
+        `{ ${this.message} }`, '\n',
+        ` INNER { ${this.innerMessage || 'NULL'} }`, '\n',
+        ' FROM ', this.error.code,
+        `{ ${this.error.message} }`)
+      return
+    }
+    const error: any = this.error
+    const sqlMessage = error?.sqlMessage
+
+    logger.error('**************************************************')
+    logger.error(
+      this.time(),
+      this.code,
+      `{ ${this.message} }`, '\n',
+      ` INNER { ${this.innerMessage || 'NULL'} }`, '\n',
+      ' FROM ',
+      `NATIVE ${this.error?.message || (sqlMessage && `SQLMessage: { ${sqlMessage || 'NULL'} }`) || '{ NULL }'}`)
+  }
+
+  time() {
+    const date = new Date()
+    return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.toString().split(' ')[4]} ${date.getMilliseconds()}\n `
   }
 }

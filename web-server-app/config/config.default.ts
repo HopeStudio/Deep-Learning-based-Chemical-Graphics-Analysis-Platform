@@ -48,7 +48,7 @@ export default (appInfo: EggAppInfo) => {
       expire: 10,
     },
 
-    root: 'https://cga.com/',
+    webRoot: 'https://cga.com',
   }
 
   // the return config will combines to EggAppConfig
