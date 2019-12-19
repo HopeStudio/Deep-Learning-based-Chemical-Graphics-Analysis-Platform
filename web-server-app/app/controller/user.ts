@@ -177,6 +177,31 @@ export default class UserController extends Controller {
     await this.service.user.resetPassword(uname, password, newPassword)
     this.ctx.send()
   }
+
+  @err.message('fail to send email').code(23)
+  @param('email', 'uname')
+  async sendResetPasswordByEmail() {
+    const { email, uname } = this.ctx.request.body
+    const result = await this.service.user.checkUserEmail(uname, email)
+    console.log('check =====> ', result, email, uname)
+    if (!result) {
+      throw new CError(
+        'please input correct username or email',
+        err.type.controller().module.user().errCode(21),
+        false)
+    }
+    await this.service.verification.sendResetPasswordEmail(email, uname)
+    this.ctx.send()
+  }
+
+  @err.message('reset password fail').code(22)
+  @param('token', 'newPassword')
+  async resetPasswordByEmail() {
+    const { token, newPassword } = this.ctx.request.body
+    const { uname } = await this.service.verification.verifyResetPasswordToken(token)
+    await this.service.user.resetPasswordByOauth(uname, newPassword)
+    this.ctx.send()
+  }
 }
 
 err.restore()

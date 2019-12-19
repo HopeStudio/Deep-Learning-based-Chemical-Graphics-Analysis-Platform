@@ -184,12 +184,12 @@ export default class UserService extends Service {
     if (!user) {
       throw new CError(
         'user is not exist, in oauth type',
-        err.type.service().module.user().errCode(19),
-        true)
+        err.type.service().module.user().errCode(19))
     }
 
     const { password, salt } = user
-    if (this.checkPassword(rawPassword, password, salt)) {
+    const isPasswordCorrect = await this.checkPassword(rawPassword, password, salt)
+    if (isPasswordCorrect) {
       return {
         name: user.name,
         groupId: user.group_id,
@@ -197,9 +197,11 @@ export default class UserService extends Service {
     }
 
     throw new CError(
-      'password is incorrect, in oauth type',
+      'password or username is incorrect',
       err.type.service().module.user().errCode(20),
-      true)
+      false,
+      undefined,
+      'password is incorrect, in oauth type')
   }
 
   @err.internal().message('handle password error').code(23)
@@ -253,6 +255,32 @@ export default class UserService extends Service {
     }
 
     await this.service.blacklist.setUserToken(name)
+  }
+
+  async resetPasswordByOauth(name: User['name'], newPassword: User['password']) {
+    const salt = await this.generateSalt()
+    const processPassword = await this.handlePassword(newPassword, salt)
+    await this.app.mysql.update<SelectUserSchema<'password' | 'salt'>>('user', {
+      password: processPassword,
+      salt,
+    }, {
+      where: { name },
+    })
+  }
+
+  async checkUserEmail(name: User['name'], email: OAuth['openId']) {
+    const queryResult = await this.app.mysql.query(`
+    SELECT user.name name, oauth.open_id open_id
+    FROM user
+    INNER JOIN user_oauth oauth
+    ON user.id = oauth.user_id
+    WHERE oauth.open_id= ? AND user.name= ? AND oauth.auth_type= ?`, [ email, name, 'email' ])
+
+    if (!queryResult || queryResult.length === 0) {
+      return false
+    }
+
+    return true
   }
 }
 

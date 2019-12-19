@@ -31,4 +31,10 @@ export default (app: Application) => {
   router.post(
     '/user/resetpassword',
     controller.user.resetPassword)
+  router.post(
+    '/user/forgotpassword',
+    controller.user.sendResetPasswordByEmail)
+  router.post(
+    '/user/password/reset',
+    controller.user.resetPasswordByEmail)
 }

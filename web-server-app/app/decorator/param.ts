@@ -40,6 +40,7 @@ export default function param(...options: Array<string | string[] | Rules | Rule
 
       // check if param is exist in cookie
       validator.addRule('cookie', param => exist(this.ctx.cookies.get(param)))
+      validator.addRule('query', param => exist(ctx.query[param]))
 
       const lackOfParam = validator.validate(...options)
 
@@ -60,7 +61,7 @@ export default function param(...options: Array<string | string[] | Rules | Rule
   }
 }
 
-type rules = 'default' | 'cookie' | 'string' | 'number'
+type rules = 'default' | 'cookie' | 'string' | 'number' | 'query'
 
 interface Rules {
   [props: string]: rules
