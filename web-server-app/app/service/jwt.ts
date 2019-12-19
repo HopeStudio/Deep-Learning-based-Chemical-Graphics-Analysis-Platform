@@ -20,7 +20,7 @@ export default class JsonWebTokenService extends Service {
 
   @err.internal().message('token verify error').code(12)
   verify<T>(token: string, options?: DecodeOptions): T {
-    return verify(token, this.privateKey, options) as any
+    return verify(token, this.privateKey, options) as any as T
   }
 }
 

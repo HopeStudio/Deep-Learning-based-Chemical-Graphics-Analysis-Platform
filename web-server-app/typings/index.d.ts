@@ -1,4 +1,5 @@
 import 'egg';
+import { AccessToken } from '../app/type/auth'
 
 interface mysqlResult {
   fieldCount: number
@@ -46,7 +47,7 @@ declare module 'egg' {
 
   interface Context {
     send(code?: number, data?: object | string): ResponseData
-    auth?: {[a: string]: any}
+    auth?: AccessToken
   }
 
   interface 

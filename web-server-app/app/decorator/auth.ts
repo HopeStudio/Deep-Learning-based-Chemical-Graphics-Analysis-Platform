@@ -2,6 +2,7 @@ import { Context } from 'egg'
 import { createDecorator } from '../utils'
 import CError from '../error'
 import err from './err'
+import { AccessToken } from '../type/auth'
 
 const auth = createDecorator(async function (this: { ctx: Context }) {
   const { ctx } = this
@@ -16,10 +17,9 @@ const auth = createDecorator(async function (this: { ctx: Context }) {
       false)
   }
 
-  let data
   try {
     // fail to decode or timeout
-    data = await ctx.service.jwt.verify(accessToken)
+    ctx.auth = await ctx.service.jwt.verify<AccessToken>(accessToken)
   } catch (error) {
     throw new CError(
       'need to reflesh accessToken',
@@ -29,7 +29,15 @@ const auth = createDecorator(async function (this: { ctx: Context }) {
       'fail to decode or timeout')
   }
 
-  ctx.auth = data
+  const isNeedUpdate = await ctx.service.blacklist.verifyUserToken(ctx.auth)
+  if (isNeedUpdate) {
+    throw new CError(
+      'need to reflesh accessToken',
+      err.type.auth().errCode(12),
+      false,
+      undefined,
+      'access token is in blacklist')
+  }
 })
 
 export default auth

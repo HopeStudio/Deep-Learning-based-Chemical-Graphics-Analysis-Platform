@@ -37,15 +37,15 @@ export default (appInfo: EggAppInfo) => {
 
     // reflesh token
     refleshToken: {
-      // 1 day
-      expire: 24 * 60,
+      // unit: min
+      expire: 60,
       path: '/user/reflesh',
     },
 
     // access token
     accessToken: {
-      // 1 min
-      expire: 1,
+      // unit: min
+      expire: 10,
     },
   }
 

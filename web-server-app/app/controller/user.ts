@@ -2,6 +2,7 @@ import { Controller } from 'egg'
 import { param, err, auth } from '../decorator'
 import CError from '../error'
 import { User, AuthTypes, OAuth } from '../type/user'
+import { TokenTypes, RefleshTokenData, AccessTokenData, LoginTokenData } from '../type/auth'
 
 err.type.controller().module.user().save()
 
@@ -71,7 +72,7 @@ export default class UserController extends Controller {
     const refleshToken = await this.generateRefleshToken(tokenData)
     const accessToken = await this.generateAccessToken(tokenData)
 
-    this.ctx.cookies.set('reflesh', refleshToken, {
+    this.ctx.cookies.set(TokenTypes.reflesh, refleshToken, {
       httpOnly: true,
       path: this.app.config.refleshToken.path,
       // second
@@ -99,7 +100,7 @@ export default class UserController extends Controller {
         true)
     }
 
-    const tokenData = {
+    const tokenData: LoginTokenData = {
       uname: user.name,
       groupId: user.groupId,
     }
@@ -112,14 +113,14 @@ export default class UserController extends Controller {
   }
 
   private async generateRefleshToken(user: LoginTokenData): Promise<string> {
-    const payload: RefleshTokenData = { ...user, tokenType: TokenType.reflesh }
+    const payload: RefleshTokenData = { ...user, tokenType: TokenTypes.reflesh }
     const token = await this.service.jwt.sign(payload, this.app.config.refleshToken.expire)
 
     return token
   }
 
   private async generateAccessToken(user: LoginTokenData): Promise<string> {
-    const payload: AccessTokenData = { ...user, tokenType: TokenType.access }
+    const payload: AccessTokenData = { ...user, tokenType: TokenTypes.access }
     const token = await this.service.jwt.sign(payload, this.app.config.accessToken.expire)
 
     return token
@@ -129,7 +130,7 @@ export default class UserController extends Controller {
   @param('uname')
   async refleshAccessToken() {
     const { uname } = this.ctx.request.body
-    const refleshToken = this.ctx.cookies.get('reflesh')
+    const refleshToken = this.ctx.cookies.get(TokenTypes.reflesh)
     if (!refleshToken) {
       throw new CError(
         'login timeout, need to login again',
@@ -186,23 +187,4 @@ interface RegisterUser {
 interface TokenInfo {
   authType: OAuth['authType']
   openId: OAuth['openId']
-}
-
-interface LoginTokenData {
-  uname: User['name']
-  groupId: User['groupId']
-  [prop: string]: any
-}
-
-enum TokenType {
-  access = 'access',
-  reflesh = 'reflesh',
-}
-
-interface RefleshTokenData extends LoginTokenData {
-  tokenType: TokenType.reflesh
-}
-
-interface AccessTokenData extends LoginTokenData {
-  tokenType: TokenType.access
 }
