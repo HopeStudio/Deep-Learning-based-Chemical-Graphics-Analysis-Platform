@@ -266,6 +266,7 @@ export default class UserService extends Service {
     }, {
       where: { name },
     })
+    await this.service.blacklist.setUserToken(name)
   }
 
   async checkUserEmail(name: User['name'], email: OAuth['openId']) {
