@@ -26,6 +26,21 @@ export interface OAuthSchema {
   open_id: string
 }
 
+export interface ProfileSchema {
+  user_id: number
+  bio: string
+  location: string
+  url: string
+  create_time: string
+  last_modify: string
+}
+
+export interface Profile extends Omit<ProfileSchema, 'user_id' | 'create_time' | 'last_modify'> {
+  userId: ProfileSchema['user_id'],
+  createTime: ProfileSchema['create_time']
+  lastModify: ProfileSchema['last_modify']
+}
+
 export interface User extends Omit<UserSchema, 'group_id'> {
   groupId: UserSchema['group_id']
 }
@@ -39,5 +54,7 @@ export interface OAuth extends Omit<OAuthSchema, 'user_id' | 'auth_type' | 'acce
 
 export type SelectUserSchema<K extends keyof UserSchema> = Pick<UserSchema, K>
 export type SelectOAuthSchema<K extends keyof OAuthSchema> = Pick<OAuthSchema, K>
+export type SelectProfileSchema<K extends keyof ProfileSchema> = Pick<ProfileSchema, K>
 export type SelectUser<K extends keyof User> = Pick<User, K>
 export type SelectOAuth<K extends keyof OAuth> = Pick<OAuth, K>
+export type SelectProfile<K extends keyof Profile> = Pick<Profile, K>

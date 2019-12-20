@@ -2,7 +2,7 @@ import { Service } from 'egg'
 import * as crypto from 'crypto'
 import CError from '../error'
 import { err } from '../decorator'
-import { SelectOAuth, SelectOAuthSchema, SelectUser, SelectUserSchema, OAuthSchema, User, UserSchema, OAuth } from '../type/user'
+import { SelectOAuth, SelectOAuthSchema, SelectUser, SelectUserSchema, OAuthSchema, User, UserSchema, OAuth, SelectProfile, Profile, SelectProfileSchema } from '../type/user'
 
 err.type.service().module.user().save()
 
@@ -90,15 +90,27 @@ export default class UserService extends Service {
 
       const { id: user_id } = user
 
-      const userAuthResult = await coon.insert<SelectOAuthSchema<'user_id' | 'auth_type' | 'open_id'>>('user_oauth', {
-        user_id,
-        auth_type: authType,
-        open_id: openId,
-      })
+      const updateOAuth = () => {
+        return coon.insert<SelectOAuthSchema<'user_id' | 'auth_type' | 'open_id'>>('user_oauth', {
+          user_id,
+          auth_type: authType,
+          open_id: openId,
+        })
+      }
 
-      if (userAuthResult.affectedRows !== 1) {
+      const updateProfile = () => {
+        return coon.insert<SelectProfileSchema<'user_id' | 'create_time' | 'last_modify'>>('user_profile', {
+          user_id,
+          create_time: this.getTime(),
+          last_modify: this.getTime(),
+        })
+      }
+
+      const [ userAuthResult, userProfileResult ] = await Promise.all([ updateOAuth(), updateProfile() ])
+
+      if (userAuthResult.affectedRows !== 1 || userProfileResult.affectedRows !== 1) {
         throw new CError(
-          'can not insert oauth',
+          'can not insert oauth and profile',
           err.type.service().module.user().errCode(16),
           true)
       }
@@ -215,25 +227,13 @@ export default class UserService extends Service {
     return crypto.randomBytes(Math.floor(length / 2)).toString('hex')
   }
 
-  async checkPassword(rawPassword: User['password'], password: User['password'], salt: User['salt']) {
+  private async checkPassword(rawPassword: User['password'], password: User['password'], salt: User['salt']) {
     const processPassword = await this.handlePassword(rawPassword, salt)
     return password === processPassword
   }
 
   async resetPassword(name: User['name'], rawPassword: User['password'], newPassword: User['password']) {
-    const queryResult = await this.app.mysql.select<SelectUserSchema<'password' | 'salt'>>('user', {
-      columns: [ 'password', 'salt' ],
-      where: { name },
-    })
-
-    if (!queryResult || queryResult.length === 0) {
-      throw new CError(
-        'user is not exist',
-        err.type.service().module.user().errCode(24))
-    }
-
-    const [ { password, salt } ] = queryResult
-    const isPasswordCorrect = await this.checkPassword(rawPassword, password, salt)
+    const isPasswordCorrect = await this.verifyPassword(name, rawPassword)
 
     if (!isPasswordCorrect) {
       throw new CError(
@@ -241,9 +241,12 @@ export default class UserService extends Service {
         err.type.service().module.user().errCode(25))
     }
 
+    const salt = await this.generateSalt()
+
     const processPassword = await this.handlePassword(newPassword, salt)
     const result = await this.app.mysql.update('user', {
       password: processPassword,
+      salt,
     }, {
       where: { name },
     })
@@ -283,8 +286,118 @@ export default class UserService extends Service {
 
     return true
   }
+
+  // 二次验证用户密码
+  async verifyPassword(name: User['name'], rawPassword: User['password']) {
+    const queryResult = await this.app.mysql.select<SelectUserSchema<'password' | 'salt'>>('user', {
+      columns: [ 'password', 'salt' ],
+      where: { name },
+    })
+    if (!queryResult || queryResult.length === 0) {
+      throw new CError(
+        'user not exist',
+        err.type.service().module.user().errCode(27),
+        false)
+    }
+
+    const [ { password, salt } ] = queryResult
+    const isPasswordCorrect = await this.checkPassword(rawPassword, password, salt)
+    return isPasswordCorrect
+  }
+
+  async getUserInfo(name: User['name']) {
+    const queryResult = await this.app.mysql.select<SelectUserSchema<'name' | 'avatar' | 'gender'>>('user', {
+      columns: [ 'name', 'avatar', 'gender' ],
+      where: { name },
+    })
+    if (!queryResult || queryResult.length === 0) {
+      throw new CError(
+        'user not exist',
+        err.type.service().module.user().errCode(27),
+        false)
+    }
+
+    return queryResult[0]
+  }
+
+  async getUserFullInfo(name: User['name']) {
+    const [ user ] = await this.app.mysql.query<UserFullInfo>(`
+      SELECT
+      user.name name,
+      user.gender gender,
+      user.avatar avatar,
+      user_profile.bio bio,
+      user_profile.location location,
+      user_profile.url url,
+      oauth.open_id email
+    FROM
+      user
+      LEFT JOIN user_oauth oauth ON user.id = oauth.user_id AND oauth.auth_type = 'email'
+      LEFT JOIN user_profile ON user.id = user_profile.user_id
+    WHERE
+      user.name = ?`, [ name ])
+
+    if (!user) {
+      throw new CError(
+        'user not exist',
+        err.type.service().module.user().errCode(28),
+        false)
+    }
+
+    return user
+  }
+
+  async updateUserProfile(profileData: UpdateProfile) {
+    const { bio, location, url, name } = profileData
+    await this.app.mysql.query(`
+        UPDATE
+        user_profile
+        LEFT JOIN user ON user.id = user_profile.user_id
+      SET
+        user_profile.bio = ?
+        user_profile.location = ?
+        user_profile.url = ?
+        user_profile.last_modify = ?
+      WHERE
+        user.name = ?
+        `, [ bio, location, url, this.getTime(), name ])
+  }
+
+  async deleteUser(name: User['name']) {
+    await this.app.mysql.query(`
+    DELETE user,
+    user_oauth,
+    user_profile
+    FROM
+      user
+      LEFT JOIN user_oauth ON user_oauth.user_id = user.id
+      LEFT JOIN user_profile ON user_profile.user_id = user.id
+    WHERE
+      user.name = ?
+    `, [ name ])
+  }
+
+  async updateEmail(email: OAuth['openId'], newEmail: OAuth['openId']) {
+    await this.app.mysql.update<SelectOAuthSchema<'open_id'>>('user_oauth', {
+      open_id: newEmail,
+    }, {
+      where: { open_id: email },
+    })
+  }
+
+  getTime() {
+    const now = new Date()
+    return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`
+  }
 }
 
 err.restore()
 
 interface RegisterUserParam extends SelectUser<'name' | 'password'>, SelectOAuth<'authType' | 'openId'> { }
+
+interface UserFullInfo extends SelectUser<'name' | 'gender' | 'avatar'>, SelectProfile<'bio' | 'location' | 'url'> {
+  email: OAuth['openId']
+}
+
+interface UpdateProfile extends SelectUser<'name'>, Omit<Profile, 'userId' | 'createTime' | 'lastModify'> {
+}

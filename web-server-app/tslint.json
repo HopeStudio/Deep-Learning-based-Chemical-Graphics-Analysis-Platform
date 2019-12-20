@@ -12,6 +12,7 @@
       "single"
     ],
     "only-arrow-functions": false,
-    "ter-prefer-arrow-callback": false
+    "ter-prefer-arrow-callback": false,
+    "no-bitwise": false
   }
 }

@@ -1,10 +1,11 @@
 import { Context } from 'egg'
-import { createDecorator } from '../utils'
+import { createDecorator, permission } from '../utils'
 import CError from '../error'
 import err from './err'
 import { AccessToken } from '../type/auth'
+import { UserPermission, AdminPermission } from '../type/permission'
 
-const auth = createDecorator(async function (this: { ctx: Context }) {
+const auth = createDecorator(async function (this: { ctx: Context }, options: Options) {
   const { ctx } = this
 
   // validate accessToken
@@ -38,6 +39,36 @@ const auth = createDecorator(async function (this: { ctx: Context }) {
       undefined,
       'access token is in blacklist')
   }
+
+  // check if specify detail permission
+  const { user = [], admin = [] } = options
+  const permissionCode = 122
+
+  const userPermissionCheck = user.every(pos => permission.getPermission(permissionCode, pos))
+  if (!userPermissionCheck) {
+    throw new CError(
+      'Permission denied',
+      err.type.auth().errCode(13),
+      false,
+      undefined,
+      'user permission denied')
+  }
+
+  const AdminPermissionCheck = admin.every(pos => permission.getPermissionLeft(permissionCode, pos))
+  if (!AdminPermissionCheck) {
+    throw new CError(
+      'Permission denied',
+      err.type.auth().errCode(14),
+      false,
+      undefined,
+      'admin permission denied')
+  }
+
 })
 
 export default auth
+
+interface Options {
+  user?: UserPermission[]
+  admin?: AdminPermission[]
+}

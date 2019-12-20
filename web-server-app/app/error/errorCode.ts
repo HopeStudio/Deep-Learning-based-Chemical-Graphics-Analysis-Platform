@@ -13,6 +13,7 @@ const errorCode = {
     jwt: 13,
     sms: 14,
     mail: 15,
+    userGroup: 16,
   },
 }
 
@@ -33,4 +34,5 @@ export interface Module {
   jwt
   sms
   mail
+  userGroup
 }

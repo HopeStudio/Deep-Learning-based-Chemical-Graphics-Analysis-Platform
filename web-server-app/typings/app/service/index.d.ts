@@ -7,6 +7,7 @@ import ExportBlacklist from '../../../app/service/blacklist';
 import ExportJwt from '../../../app/service/jwt';
 import ExportMail from '../../../app/service/mail';
 import ExportSms from '../../../app/service/sms';
+import ExportUserGroup from '../../../app/service/userGroup';
 import ExportVerification from '../../../app/service/verification';
 
 declare module 'egg' {
@@ -16,6 +17,7 @@ declare module 'egg' {
     jwt: ExportJwt;
     mail: ExportMail;
     sms: ExportSms;
+    userGroup: ExportUserGroup;
     verification: ExportVerification;
   }
 }
