@@ -106,3 +106,7 @@ dist
 .vscode
 yarn.lock
 .DS_Store
+
+deep-learning-app/data
+deep-learning-app/data.zip
+deep-learning-app/**/*.csv
