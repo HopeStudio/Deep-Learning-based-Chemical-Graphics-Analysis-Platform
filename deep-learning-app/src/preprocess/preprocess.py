@@ -1,4 +1,4 @@
-# this process is attempt to convert the floder /data
+# this process is attempt to convert the folder /data
 # to a main .csv file with following structure:
 # input(IR row data), cas_no, smiles, label, remarks, name, formula, group
 # 
@@ -59,9 +59,9 @@ class PreProcessor:
     # 硫醚
   )
 
-  def __init__(self, data_floder, output_floder, group_file = default_group_file):
-    self.data_floder = data_floder
-    self.output_floder = output_floder
+  def __init__(self, data_folder, output_folder, group_file = default_group_file):
+    self.data_folder = data_folder
+    self.output_folder = output_folder
     self.group_file = group_file
     self.group_map = {}
     self.init_group_map()
@@ -137,9 +137,9 @@ class PreProcessor:
     return (input_data, cas, smiles, label, remarks, name, formular, group)
 
   def process_item(self, file_name):
-    mdl_file = os.path.join(self.data_floder, file_name + '.mol')
-    ir_data_file = os.path.join(self.data_floder, file_name + '.raw')
-    meta_file = os.path.join(self.data_floder, file_name + '.meta.json')
+    mdl_file = os.path.join(self.data_folder, file_name + '.mol')
+    ir_data_file = os.path.join(self.data_folder, file_name + '.raw')
+    meta_file = os.path.join(self.data_folder, file_name + '.meta.json')
 
     # process item
     vector = self.convert_ir_data_to_vector(ir_data_file)
@@ -148,8 +148,8 @@ class PreProcessor:
     name, formular, remarks, cas, group = self.get_info(meta_file)
     self.append_main_csv(vector, cas, smiles, label, remarks, name, formular, group)
 
-  def process_cas_floder(self, cas):
-    dirs = os.listdir(os.path.join(self.data_floder, cas))
+  def process_cas_folder(self, cas):
+    dirs = os.listdir(os.path.join(self.data_folder, cas))
     items = set([])
     for dir in dirs:
       items.add(dir.split('.')[0])
@@ -163,24 +163,24 @@ class PreProcessor:
 
     return len(items)
 
-  def process_data_floder(self):
-    cas_dirs = os.listdir(os.path.join(self.data_floder))
+  def process_data_folder(self):
+    cas_dirs = os.listdir(os.path.join(self.data_folder))
     num_of_item = 0
     for cas in cas_dirs:
       if cas.startswith('.'): continue
-      print('start process cas_floder: ', cas)
-      num_of_item += self.process_cas_floder(cas)
-      print('process cas_floder ', cas, 'end')
+      print('start process cas_folder: ', cas)
+      num_of_item += self.process_cas_folder(cas)
+      print('process cas_folder ', cas, 'end')
 
     print('process ', num_of_item, 'items')
 
 
-data_floder = os.path.join(os.getcwd(), '../../data')
-output_floder = os.path.join(os.getcwd(), '../../output')
+data_folder = os.path.join(os.getcwd(), '../../data')
+output_folder = os.path.join(os.getcwd(), '../../output')
 
-pre_processor = PreProcessor(data_floder=data_floder, output_floder=output_floder)
+pre_processor = PreProcessor(data_folder=data_folder, output_folder=output_folder)
 
-# pre_processor.process_data_floder()
+# pre_processor.process_data_folder()
 result = pre_processor.get_label('CC#N(CC)CC')
 print(result)
 
