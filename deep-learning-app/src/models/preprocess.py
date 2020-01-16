@@ -21,12 +21,14 @@ import os
 import csv
 import random
 
-
-default_group_file = './category.json'
+data_folder = os.path.join(os.getcwd(), '../../data')
+output_folder = os.path.join(os.getcwd(), './output')
+group_file = os.path.join(os.getcwd(), './category.json')
 
 class CSVData:
-  def __init__(self, reader):
+  def __init__(self, reader, is_parse_json = True):
     self.reader = reader
+    self.is_parse_json = is_parse_json
     # skip header
     self.reader.__next__()
   def __iter__(self):
@@ -35,6 +37,9 @@ class CSVData:
     rowData = self.reader.__next__()
     data = tuple(rowData)
     input_data_json, label_json = data
+    if not self.is_parse_json:
+      return (input_data_json, label_json)
+
     input_data = json.loads(input_data_json)
     label = json.loads(label_json)
     return (input_data, label)
@@ -95,7 +100,7 @@ class PreProcessor:
     '[SH]',
   )
 
-  def __init__(self, data_folder, output_folder, group_file = default_group_file):
+  def __init__(self, data_folder = data_folder, output_folder = output_folder, group_file = group_file):
     self.data_folder = data_folder
     self.output_folder = output_folder
     self.group_file = group_file
@@ -186,27 +191,13 @@ class PreProcessor:
     # return iterator
     return CSVData()
 
-  def read_classify_csv_file(self, group_name):
+  def read_classify_csv_file(self, group_name, is_parse_json = True):
     output_csv_file_path = os.path.join(self.output_folder, 'classify', group_name.replace('/', '_') + '.csv')
     file = open(output_csv_file_path, 'r')
     reader = csv.reader(file)
-    # skip header
-    reader.__next__()
-
-    # return a iterator
-    class CSVData:
-      def __iter__(self):
-        return self
-      def __next__(self):
-        rowData = reader.__next__()
-        data = tuple(rowData)
-        input_data_json, label_json = data
-        input_data = json.loads(input_data_json)
-        label = json.loads(label_json)
-        return (input_data, label)
     
     # return iterator
-    return CSVData()
+    return CSVData(reader, is_parse_json)
 
   def process_item(self, file_name):
     mdl_file = os.path.join(self.data_folder, file_name + '.mol')
@@ -322,7 +313,7 @@ class PreProcessor:
 
     for group_name in self.groups:
       count = self.count[group_name]
-      data = self.read_classify_csv_file(group_name)
+      data = self.read_classify_csv_file(group_name, False)
       if count < 5:
         # all to be tranning set
         for writer in tranning_writers:
@@ -442,10 +433,12 @@ class PreProcessor:
       n += 1
     return n
 
-data_folder = os.path.join(os.getcwd(), '../../data')
-output_folder = os.path.join(os.getcwd(), './output')
-
-pre_processor = PreProcessor(data_folder=data_folder, output_folder=output_folder)
+pre_processor = PreProcessor(data_folder=data_folder, output_folder=output_folder, group_file=group_file)
 
 
 # pre_processor.start()
+# tranning_set, validation_set, test_set = pre_processor.read_dataset()
+
+# data = test_set.__next__()
+
+# print(data[1][0])
