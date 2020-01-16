@@ -127,7 +127,7 @@ class PreProcessor:
     file = open(ir_data_file, mode='r')
     raw_data = file.read()
     pair_data = raw_data.split(';')[:-1]
-    y_data = map(lambda pair_string: int(pair_string.split('/')[1]) / 10, pair_data)
+    y_data = map(lambda pair_string: int(pair_string.split('/')[1]) / 1000, pair_data)
     result = [y for y in y_data]
     if len(result) != 3801:
       print('data error: is not fix 3801')
@@ -433,7 +433,7 @@ class PreProcessor:
       n += 1
     return n
 
-pre_processor = PreProcessor(data_folder=data_folder, output_folder=output_folder, group_file=group_file)
+# pre_processor = PreProcessor(data_folder=data_folder, output_folder=output_folder, group_file=group_file)
 
 
 # pre_processor.start()
