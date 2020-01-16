@@ -46,58 +46,58 @@ class CSVData:
 
 class PreProcessor:
   functional_group_smarts = (
-    # 烷烃
-    '[CH]',
-    '[CH2]',
-    '[CH3]',
-    # 烯烃
-    'C=C',
-    # 炔烃
-    'C#C',
-    # 苯
-    '[c;r6]',
-    # 芳香
-    'c',
-    # 甲苯
-    '[c;r6]C',
-    # 苯酚
-    '[c;r6][OH]',
-    # 卤素
-    'C[F,Cl,Br,I]',
-    'c[F,Cl,Br,I]',
-    # 酰卤
-    'C(=O)Cl',
-    # 醇
-    '[OH]',
-    # 酮
-    'CC(=O)C',
-    # 醛
-    '[H]C(=O)',
-    # 酯
-    'C(=O)OC',
-    # 酸
-    'C(=O)[OH]',
-    # 醚
-    'COC',
-    # 过氧
-    'OO',
-    # 酸酐
-    'C(=O)OOC(=O)',
-    # 酰胺
-    'C(=O)N',
-    # 胺
-    '[NH]',
-    '[NH2]',
-    # 亚胺
-    'C=N',
-    # 叠氮化物
-    'N#N',
-    # 腈
-    'C#N',
-    # 硝基化合物
-    '[N+](=O)[O-]',
-    # 硫醇
-    '[SH]',
+    # # 烷烃
+    # # '[CH]',
+    # '[CH2]',
+    # # '[CH3]',
+    # # 烯烃
+    # 'C=C',
+    # # 炔烃
+    # 'C#C',
+    # # 苯
+    # # '[c;r6]',
+    # # 芳香
+    # 'c',
+    # # 甲苯
+    # # '[c;r6]C',
+    # # 苯酚
+    # '[c;r6][OH]',
+    # # 卤素
+    # 'C[F,Cl,Br,I]',
+    # # 'c[F,Cl,Br,I]',
+    # # 酰卤
+    # # 'C(=O)Cl',
+    # # 醇
+    # '[OH]',
+    # # 酮
+    # '[#6]C(=O)[#6]',
+    # # 醛
+    # '[H]C(=O)',
+    # # 酯
+    # '[#6](=O)O[#6]',
+    # # 酸
+    '[#6](=O)[OH]',
+    # # 醚
+    # '[#6]O[#6]',
+    # # 过氧
+    # # 'OO',
+    # # 酸酐
+    # # 'C(=O)OOC(=O)',
+    # # 酰胺
+    # 'C(=O)N',
+    # # 胺
+    # # '[NH]',
+    # # '[NH2]',
+    # # 亚胺
+    # # 'C=N',
+    # # 叠氮化物
+    # # 'N#N',
+    # # 腈
+    # 'C#N',
+    # # 硝基化合物
+    # '[N+](=O)[O-]',
+    # # 硫醇
+    # '[SH]',
   )
 
   def __init__(self, data_folder = data_folder, output_folder = output_folder, group_file = group_file):
@@ -434,9 +434,8 @@ class PreProcessor:
     return n
 
 # pre_processor = PreProcessor(data_folder=data_folder, output_folder=output_folder, group_file=group_file)
-
-
 # pre_processor.start()
+
 # tranning_set, validation_set, test_set = pre_processor.read_dataset()
 
 # data = test_set.__next__()

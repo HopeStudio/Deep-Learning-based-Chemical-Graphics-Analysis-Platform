@@ -9,6 +9,8 @@ from load_data import load_data
 
 (train_data, train_label), (validation_data, validation_label), (test_data, test_label) = load_data()
 
+output_num = len(train_label[0][0])
+
 # Normalize pixel values to be between 0 and 1
 # train_data, validation_data, test_data = train_data / 100, validation_data / 100, test_data / 100
 
@@ -58,12 +60,13 @@ from load_data import load_data
 # print('Test accuracy:', test_acc)
 
 
-inputs = keras.Input(shape=(1, 3801))
-x = layers.Conv1D(200, 5, activation='relu', strides=1, padding='same')(inputs)
+inputs = keras.Input(shape=(1,3801))
+x = inputs
+x = layers.Conv1D(200, 5, activation='relu', strides=1, padding='same')(x)
 x = layers.MaxPooling1D(2, padding='same')(x)
 # x = layers.Dense(2000, activation='relu')(x)
 x = layers.Dense(500, activation='relu')(x)
-outputs = layers.Dense(28, activation='sigmoid')(x)
+outputs = layers.Dense(output_num, activation='sigmoid')(x)
 
 model = keras.Model(inputs=inputs, outputs=outputs, name='mnist_model')
 model.summary()
@@ -84,7 +87,7 @@ test_loss, test_acc = model.evaluate(test_data,  test_label, verbose=2)
 print('Test loss:', test_loss)
 print('Test accuracy:', test_acc)
 
-print('\n# Generate predictions for 3 samples')
-predictions = model.predict(test_data[:3])
+print('\n# Generate predictions for 5 samples')
+predictions = model.predict(test_data[:5])
 print(predictions)
-print(test_label[:3])
+print(test_label[:5])
