@@ -47,38 +47,38 @@ class CSVData:
 class PreProcessor:
   functional_group_smarts = (
     # # 烷烃
-    # # '[CH]',
+    # '[CH]',
     # '[CH2]',
-    # # '[CH3]',
+    # '[CH3]',
     # # 烯烃
-    # 'C=C',
+    'C=C',
     # # 炔烃
-    # 'C#C',
+    'C#C',
     # # 苯
-    # # '[c;r6]',
+    '[c;r6]',
     # # 芳香
-    # 'c',
+    'c',
     # # 甲苯
     # # '[c;r6]C',
     # # 苯酚
-    # '[c;r6][OH]',
+    '[c;r6][OH]',
     # # 卤素
-    # 'C[F,Cl,Br,I]',
-    # # 'c[F,Cl,Br,I]',
+    '[#6][F,Cl,Br,I]',
+    # 'c[F,Cl,Br,I]',
     # # 酰卤
     # # 'C(=O)Cl',
     # # 醇
-    # '[OH]',
+    '[OH]',
     # # 酮
-    # '[#6]C(=O)[#6]',
+    '[#6]C(=O)[#6]',
     # # 醛
     # '[H]C(=O)',
     # # 酯
-    # '[#6](=O)O[#6]',
+    '[#6](=O)O[#6]',
     # # 酸
     '[#6](=O)[OH]',
     # # 醚
-    # '[#6]O[#6]',
+    '[#6]O[#6]',
     # # 过氧
     # # 'OO',
     # # 酸酐
@@ -95,7 +95,7 @@ class PreProcessor:
     # # 腈
     # 'C#N',
     # # 硝基化合物
-    # '[N+](=O)[O-]',
+    '[N+](=O)[O-]',
     # # 硫醇
     # '[SH]',
   )
@@ -127,11 +127,13 @@ class PreProcessor:
     file = open(ir_data_file, mode='r')
     raw_data = file.read()
     pair_data = raw_data.split(';')[:-1]
-    y_data = map(lambda pair_string: int(pair_string.split('/')[1]) / 1000, pair_data)
+    y_data = map(lambda pair_string: (100 - int(pair_string.split('/')[1]) / 10) / 100, pair_data)
     result = [y for y in y_data]
     if len(result) != 3801:
       print('data error: is not fix 3801')
     return result
+    # print(len(result[0:-1:19]))
+    # return result[0:-1:2]
   
   def get_info(self, meta_file):
     file = open(meta_file, mode='r')
@@ -268,6 +270,7 @@ class PreProcessor:
     for item in data:
       input_data, cas, smiles, label, remarks, name, formular, group = item
       writer = writers[group.replace('/', '_')]
+      # label = cas
       writer.writerow((json.dumps(input_data), json.dumps(label)))
 
       print('save ', cas, ' to ', group + '.csv')
@@ -433,11 +436,11 @@ class PreProcessor:
       n += 1
     return n
 
-# pre_processor = PreProcessor(data_folder=data_folder, output_folder=output_folder, group_file=group_file)
+pre_processor = PreProcessor(data_folder=data_folder, output_folder=output_folder, group_file=group_file)
 # pre_processor.start()
 
 # tranning_set, validation_set, test_set = pre_processor.read_dataset()
 
 # data = test_set.__next__()
 
-# print(data[1][0])
+# print(data[1])
