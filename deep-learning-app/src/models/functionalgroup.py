@@ -123,3 +123,8 @@ train_model(model)
 model.summary()
 evaludate_model(model)
 save_model(model)
+
+# run in docker
+# docker run -p 8501:8501 \
+#   --mount type=bind,source=/path/to/model/in/your/computer,target=/models/functional_group \
+#   -e MODEL_NAME=functional_group -t tensorflow/serving
