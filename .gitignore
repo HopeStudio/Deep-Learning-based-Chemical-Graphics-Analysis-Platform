@@ -110,3 +110,4 @@ yarn.lock
 deep-learning-app/data
 deep-learning-app/data.zip
 deep-learning-app/**/*.csv
+deep-learning-app/**/*.pyc
