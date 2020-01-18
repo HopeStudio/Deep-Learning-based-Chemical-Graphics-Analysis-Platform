@@ -437,10 +437,5 @@ class PreProcessor:
     return n
 
 pre_processor = PreProcessor(data_folder=data_folder, output_folder=output_folder, group_file=group_file)
+
 # pre_processor.start()
-
-# tranning_set, validation_set, test_set = pre_processor.read_dataset()
-
-# data = test_set.__next__()
-
-# print(data[1])
