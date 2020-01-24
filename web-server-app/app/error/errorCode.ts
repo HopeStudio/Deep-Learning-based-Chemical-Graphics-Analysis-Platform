@@ -14,6 +14,7 @@ const errorCode = {
     sms: 14,
     mail: 15,
     userGroup: 16,
+    ir: 17,
   },
 }
 
@@ -35,4 +36,5 @@ export interface Module {
   sms
   mail
   userGroup
+  ir
 }

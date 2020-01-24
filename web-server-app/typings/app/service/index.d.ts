@@ -4,6 +4,7 @@
 import 'egg';
 import ExportUser from '../../../app/service/User';
 import ExportBlacklist from '../../../app/service/blacklist';
+import ExportIr from '../../../app/service/ir';
 import ExportJwt from '../../../app/service/jwt';
 import ExportMail from '../../../app/service/mail';
 import ExportSms from '../../../app/service/sms';
@@ -14,6 +15,7 @@ declare module 'egg' {
   interface IService {
     user: ExportUser;
     blacklist: ExportBlacklist;
+    ir: ExportIr;
     jwt: ExportJwt;
     mail: ExportMail;
     sms: ExportSms;

@@ -1,6 +1,7 @@
 import { Application } from 'egg'
 import verificationRouter from './router/verification'
 import userRouter from './router/user'
+import irRouter from './router/ir'
 
 /*
 ********** register ***********
@@ -40,4 +41,6 @@ export default (app: Application) => {
   userRouter(app)
   // verification
   verificationRouter(app)
+  // ir
+  irRouter(app)
 }

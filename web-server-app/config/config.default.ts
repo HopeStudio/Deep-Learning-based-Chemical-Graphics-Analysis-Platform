@@ -1,9 +1,10 @@
 import { EggAppConfig, EggAppInfo, PowerPartial } from 'egg'
+import * as path from 'path'
 
 export default (appInfo: EggAppInfo) => {
   const config: PowerPartial<EggAppConfig> = {
     keys: appInfo.name + '_1576210091479_6832',
-    middleware: [ 'errorHandler' ],
+    middleware: ['errorHandler'],
 
     // mysql server config
     mysql: {
@@ -49,6 +50,12 @@ export default (appInfo: EggAppInfo) => {
     },
 
     webRoot: 'https://cga.com',
+    multipart: {
+      fileSize: '50mb',
+      mode: 'stream',
+      fileExtensions: ['.txt', 'csv' ], // 扩展几种上传的文件格式
+    },
+    upload: path.resolve('./uploads'),
   }
 
   // the return config will combines to EggAppConfig
