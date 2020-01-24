@@ -1,10 +1,11 @@
 import { Controller, FileStream } from 'egg'
-// import { param, err, auth } from '../decorator'
+import { err } from '../decorator'
 // import CError from '../error'
 
-// err.type.controller().module.ir().save()
+err.type.controller().module.ir().save()
 
 export default class IRController extends Controller {
+  @err.message('fail to analyse').code(11)
   async analyseFile() {
     const stream = await this.ctx.getFileStream()
     const data = await this.getContentFromStream(stream)
@@ -37,4 +38,4 @@ export default class IRController extends Controller {
   }
 }
 
-// err.restore()
+err.restore()

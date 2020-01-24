@@ -43,6 +43,7 @@ const auth = createDecorator(async function (this: { ctx: Context }, options: Op
   // check if specify detail permission
   const { user = [], admin = [] } = options
   const permissionCode = 122
+  // const permissionCode = ctx.auth.groupId
 
   const userPermissionCheck = user.every(pos => permission.getPermission(permissionCode, pos))
   if (!userPermissionCheck) {
