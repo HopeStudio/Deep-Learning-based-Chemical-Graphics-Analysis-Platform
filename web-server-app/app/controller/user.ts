@@ -42,7 +42,7 @@ export default class UserController extends Controller {
 
     const tokenInfo = await this.service.jwt.verify<TokenInfo>(authToken)
 
-    if (tokenInfo && tokenInfo.authType === authType && tokenInfo.openId === openId) {
+    if (tokenInfo && tokenInfo.authType === authType && tokenInfo.authId === openId) {
       const user = await this.service.user.register({
         name: uname,
         password,
@@ -55,7 +55,7 @@ export default class UserController extends Controller {
         groupId: user.groupId,
       })
 
-      this.ctx.send(0, { accessToken })
+      this.ctx.send(0, { accessToken, remember: true })
       return
     }
 
@@ -207,7 +207,7 @@ export default class UserController extends Controller {
     this.ctx.send()
   }
 
-  @err.message('fail to logout').code(23)
+  @err.message('fail to logout').code(24)
   async logout() {
     this.ctx.cookies.set(TokenTypes.reflesh, '', {
       httpOnly: true,
@@ -215,6 +215,14 @@ export default class UserController extends Controller {
       // second
       maxAge: 0,
     })
+    this.ctx.send()
+  }
+
+  @err.message('fail to delete account').code(25)
+  @param('uname')
+  async deleteAccount() {
+    const { uname } = this.ctx.request.body
+    await this.service.user.deleteUser(uname)
     this.ctx.send()
   }
 }
@@ -231,5 +239,5 @@ interface RegisterUser {
 
 interface TokenInfo {
   authType: OAuth['authType']
-  openId: OAuth['openId']
+  authId: OAuth['openId']
 }

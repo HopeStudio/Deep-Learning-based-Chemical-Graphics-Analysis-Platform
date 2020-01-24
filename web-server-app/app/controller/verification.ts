@@ -17,8 +17,9 @@ export default class VerificationController extends Controller {
     if (authType === AuthTypes.email) {
       await this.ctx.service.verification.sendVerificationCodeToMail(authId, authType)
       this.ctx.send()
+      return
     }
-    throw new Error('233')
+    throw new Error('unknown auth type')
   }
 
   @err.type.controller().module.verification().internal()

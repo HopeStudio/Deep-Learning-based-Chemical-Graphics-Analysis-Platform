@@ -41,4 +41,8 @@ export default (app: Application) => {
   router.post(
     '/user/password/reset',
     controller.user.resetPasswordByEmail)
+
+  router.post(
+    '/user/deleteaccount',
+    controller.user.deleteAccount)
 }
