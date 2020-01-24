@@ -20,6 +20,10 @@ export default (app: Application) => {
     controller.user.login)
 
   router.post(
+    '/user/logout',
+    controller.user.logout)
+
+  router.post(
     // default: /user/reflesh
     app.config.refleshToken.path,
     controller.user.refleshAccessToken)

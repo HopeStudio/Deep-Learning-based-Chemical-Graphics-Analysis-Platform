@@ -6,7 +6,9 @@ export function send(this: Context, code: number = 0, data: object | string = co
       code,
       message: data,
     }
+    return
   }
+
   this.body = {
     code,
     data,

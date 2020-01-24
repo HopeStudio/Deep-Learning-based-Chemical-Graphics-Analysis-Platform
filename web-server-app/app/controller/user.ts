@@ -68,23 +68,26 @@ export default class UserController extends Controller {
   }
 
   @err.message('fail to login', 'get login token error').code(15)
-  private async setToken(tokenData: LoginTokenData) {
-    const refleshToken = await this.generateRefleshToken(tokenData)
+  private async setToken(tokenData: LoginTokenData, remember: boolean = true) {
     const accessToken = await this.generateAccessToken(tokenData)
 
-    this.ctx.cookies.set(TokenTypes.reflesh, refleshToken, {
-      httpOnly: true,
-      path: this.app.config.refleshToken.path,
-      // second
-      maxAge: this.app.config.refleshToken.expire * 60,
-    })
+    if (remember) {
+      const refleshToken = await this.generateRefleshToken(tokenData)
+      this.ctx.cookies.set(TokenTypes.reflesh, refleshToken, {
+        httpOnly: true,
+        path: this.app.config.refleshToken.path,
+        // second
+        maxAge: this.app.config.refleshToken.expire * 60,
+      })
+    }
+
     return accessToken
   }
 
   @err.message('fail to login').code(16)
-  @param([ 'openId', 'uname' ], 'password')
+  @param(['openId', 'uname'], 'password')
   async login() {
-    const { uname, openId, password: rawPassword } = this.ctx.request.body
+    const { uname, openId, password: rawPassword, remember = false } = this.ctx.request.body
 
     let user
     if (uname) {
@@ -105,10 +108,11 @@ export default class UserController extends Controller {
       groupId: user.groupId,
     }
 
-    const accessToken = await this.setToken(tokenData)
+    const accessToken = await this.setToken(tokenData, remember)
 
     this.ctx.send(0, {
       accessToken,
+      remember,
     })
   }
 
@@ -200,6 +204,17 @@ export default class UserController extends Controller {
     const { token, newPassword } = this.ctx.request.body
     const { uname } = await this.service.verification.verifyResetPasswordToken(token)
     await this.service.user.resetPasswordByOauth(uname, newPassword)
+    this.ctx.send()
+  }
+
+  @err.message('fail to logout').code(23)
+  async logout() {
+    this.ctx.cookies.set(TokenTypes.reflesh, '', {
+      httpOnly: true,
+      path: this.app.config.refleshToken.path,
+      // second
+      maxAge: 0,
+    })
     this.ctx.send()
   }
 }
