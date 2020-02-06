@@ -127,7 +127,7 @@ class PreProcessor:
     file = open(ir_data_file, mode='r')
     raw_data = file.read()
     pair_data = raw_data.split(';')[:-1]
-    y_data = map(lambda pair_string: (100 - int(pair_string.split('/')[1]) / 10) / 100, pair_data)
+    y_data = map(lambda pair_string: round((100 - int(pair_string.split('/')[1]) / 10) / 100, 5), pair_data)
     result = [y for y in y_data]
     if len(result) != 3801:
       print('data error: is not fix 3801')
@@ -333,14 +333,22 @@ class PreProcessor:
           sub_data.extend([i for x in range(num_of_each_group)])
         
         # deal with extra data, random to each set
-        sub_data.extend([random.randrange(1, 6) for x in range(last_num)])
+        # sub_data.extend([random.randrange(1, 6) for x in range(last_num)])
+
+        # don't need to randomize
+        # because will cause Data Leakage
+        # we need to make sure
+        # almost all sample data of the same material
+        # will divide into the same dataset
+        # instead of divide into different dataset
+        sub_data.extend([1 for x in range(last_num)])
 
         # random the sub_data list
-        for index in range(len(sub_data)):
-          random_index = random.randrange(0, len(sub_data))
-          temp = sub_data[index]
-          sub_data[index] = sub_data[random_index]
-          sub_data[random_index] = temp
+        # for index in range(len(sub_data)):
+        #   random_index = random.randrange(0, len(sub_data))
+        #   temp = sub_data[index]
+        #   sub_data[index] = sub_data[random_index]
+        #   sub_data[random_index] = temp
 
         i = 0
         for item in data:

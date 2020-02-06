@@ -21,7 +21,7 @@ def reduce_clarity(data, n = 20):
   return result
 
 # load dataset
-(train_data, train_label), (validation_data, validation_label), (test_data, test_label) = load_data()
+(train_data, train_label), (validation_data, validation_label), (test_data, test_label) = load_data(1)
 
 output_num = len(train_label[0])
 input_num = len(train_data[0])
@@ -126,5 +126,5 @@ save_model(model)
 
 # run in docker
 # docker run -p 8501:8501 \
-#   --mount type=bind,source=/path/to/model/in/your/computer,target=/models/functional_group \
+#   --mount type=bind,source=/Users/everbrez/Code/Deep-Learning-based-Chemical-Graphics-Analysis-Platform/deep-learning-app/src/models/model/functional_group,target=/models/functional_group \
 #   -e MODEL_NAME=functional_group -t tensorflow/serving
